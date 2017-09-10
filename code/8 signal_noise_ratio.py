@@ -64,13 +64,14 @@ white_noise = tf.random_normal(shape=t.shape, mean=0, stddev=noise_amplitude).ev
 # TODO BUG: range(start=0, stop, step=2) VS ordered dictionary
 # TODO VEDERE tf.shape di array 1D e di scalari e obblico di mettere sempre le parentesi quadre negli argomenti shape delle funzioni e dimensioni con label/nome tipo xarray e pandas
 
-signal_scale_factor = 0.1
+signal_scale_factor = 0.005 #0.1
 signal_amplitude = signal_scale_factor*noise_amplitude
 # a 0.005 è ancora visibile
-# a 0.004 limite di visibilità: non si vede benissimo dove finisce
-# a 0.001 completamente invisibile
+# a 0.004 limite di buona visibilità: non si vede benissimo dove finisce
+# a 0.003 è dove entra la soglia della peakmap e dove si comincia a intravedere qualcosa
+# a 0.002 completamente invisibile (e sotto soglia nella peakmap)
 
-make_plot = True
+make_plot = False
 
 def signal_waveform(t):
     # signal = exp(i phi(t))
