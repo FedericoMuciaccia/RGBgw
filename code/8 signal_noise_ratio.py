@@ -71,7 +71,7 @@ signal_amplitude = signal_scale_factor*noise_amplitude
 # a 0.003 è dove entra la soglia della peakmap e dove si comincia a intravedere qualcosa
 # a 0.002 completamente invisibile (e sotto soglia nella peakmap)
 
-make_plot = False
+make_plot = True
 
 def signal_waveform(t):
     # signal = exp(i phi(t))
@@ -239,7 +239,7 @@ whitened_spectrogram = spectrogram/numpy.median(spectrogram)
 # power_spectrum != modulo quadro dell'FFT (serve un fattore di normalizzazione)
 # normd circa 10^-5 o 10^-6
 # dati reali con livello a 10^-23
-# simulare rumore bianco in frequenza direttamente con una gaussiana di larghezza 1/sigma # TODO corretto? grafici lin VS logy ?
+# simulare rumore bianco in frequenza direttamente con una gaussiana di larghezza 1/sigma # TODO corretto? grafici lin VS logy? si intendono le due gaussiane reale e immaginaria dell'esito della FFT?
 # finestra flat_coseno per minimizzare l'allargamento di segnali che variano un poco in frequenza (per smussare i bordi). e dunque c'è poi la necessità di buttare i bordi mediante le FFt interallacciate. (minimizzare i ghost laterali della delta di Dirac allargata della sinusoide e/o massimizzare l'altezza del picco). poi usare normw per tenere in conto della potenza persa ai bordi della finestra rispetto alla funzione gradino (fattore comuque vicino ad 1). tutti fattori da rimoltiplicare per controbilanciare la perdita di potenza spettrale
 
 if make_plot is True:
