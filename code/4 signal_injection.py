@@ -909,16 +909,11 @@ fig, [ax1, ax2, ax3] = pyplot.subplots(3, sharex=True)
 fig.suptitle('time:{}'.format(date), size=16)
 ax1.set_title('normalized power FFT (blue), autoregressive mean (magenta), periodogram (black)')
 
-percorso_file_di_prova = 'H1:GDS-CALIB_STRAIN_20161130_002935.SFDB09'
 
 
 mjd_time # modified julian day
 gps_time
 utc_time
-
-
-file_identifier = eng.fopen(path)
-eng.pia_read_block_09(file_identifier)
 
 
 
