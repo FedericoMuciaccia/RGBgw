@@ -143,6 +143,7 @@ pyplot.close()
 # e poi pure 100% con 9,8,7,6,5,4. poi altissima con 99% @3, 98% @2, 92% @1)
 default_signal_intensity = 1 #10 #5
 def add_signal(image, signal_intensity = default_signal_intensity): # un segnale di 1e-5 si vede benissimo ad occhio nudo, con un errore sostanzialmente nullo. 1e-6 si vede ancora ma non benissimo. 0.7e-6 è l'ultimo valore per cui si riesce a vedere (veramente a stento) ad occhio nudo, poiché si trova sul picco delle gaussiane dell'istogramma dei pixel. sotto il picco non si riesce ad andare. il livello di 1e-6 mi sembra comunque inferiore alla soglia di 2.5 sigma che si mette per le peakmap, quindi comunque questo classificatore arriva sotto il loro limite di detectability. il classificatore denso NON riesce a riconosce il livello di 1e-6
+# TODO in futuro bisognerà anche mettere una funzione glitch_injection(...) in modo che la rete si addestri anche ad escludere le linee che mostrano un colore solo (ma non quelle con due colori, dato che il terzo colore del segnale potrebbe essere momentaneamente sparito a causa del pattern di antenna. fare una classificazione a più categorie: [noise, 1glitch, 2signal, 3signal] in modo da effettivamente dimostrare che la rete è capace di distinguere i glitch
     rows, columns, channels = image.shape
     
     max_spindown = 16

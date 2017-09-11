@@ -64,12 +64,13 @@ white_noise = tf.random_normal(shape=t.shape, mean=0, stddev=noise_amplitude).ev
 # TODO BUG: range(start=0, stop, step=2) VS ordered dictionary
 # TODO VEDERE tf.shape di array 1D e di scalari e obblico di mettere sempre le parentesi quadre negli argomenti shape delle funzioni e dimensioni con label/nome tipo xarray e pandas
 
-signal_scale_factor = 0.005 #0.1
+signal_scale_factor = 0.1#0.005 #0.1
 signal_amplitude = signal_scale_factor*noise_amplitude
-# a 0.005 è ancora visibile
-# a 0.004 limite di buona visibilità: non si vede benissimo dove finisce
-# a 0.003 è dove entra la soglia della peakmap e dove si comincia a intravedere qualcosa
+# a 0.005 il segnale è ancora ben visibile
+# a 0.004 limite di accettabile visibilità: non si vede benissimo dove finisce
+# a 0.003 è dove entra la soglia della peakmap e dove si comincia a intravedere qualcosa (ma non si riesce affatto ad essere sicuri che sia effettivamente un segnale)
 # a 0.002 completamente invisibile (e sotto soglia nella peakmap)
+# NOTA: tutte le precedenti considerazioni valgono per immagini bianconero. TODO poi andrà fatta anche la prova col rumore bianco ed i 3 detector in contemporanea (immagine RGB senza buchi)
 
 make_plot = True
 
