@@ -104,16 +104,19 @@ model = tflearn.DNN(network, tensorboard_verbose=0) # 3
 class EarlyStoppingCallback(tflearn.callbacks.Callback):
     def on_epoch_end(self, training_state):
         if training_state.acc_value > 0.9999: # when the training accuracy is 1 the model cannot learn further
+            print('train accuracy is 1')
             raise StopIteration
 
 # load pretrained weights (to start closer to the minimum)
 model.load('/storage/users/Muciaccia/models/pretraining_amplitude_5.tflearn')
 
+# TODO mettere un if sull'attributo signal_intensity (ereditato dai dataset) per implementare il curriculum learning
+
 # training
 try:
-    model.fit({'input':train_images}, {'target':train_classes}, n_epoch=100, validation_set=({'input':test_images}, {'target':test_classes}), snapshot_step=100, show_metric=True, callbacks=EarlyStoppingCallback()) # run_id='tflearn_conv_net_trial'
+    model.fit({'input':train_images}, {'target':train_classes}, n_epoch=50, validation_set=({'input':test_images}, {'target':test_classes}), snapshot_step=100, show_metric=True, callbacks=EarlyStoppingCallback()) # run_id='tflearn_conv_net_trial'
 except StopIteration:
-    print('train accuracy is 1: training finished!')
+    print('training finished!')
 
 # save the model
 model.save('/storage/users/Muciaccia/models/pretraining_amplitude_1.tflearn')
@@ -168,7 +171,7 @@ network.eval(feed_dict={'input_1/X:0':test_images[0:64]})
 
 
 
-
+# validation
 
 import numpy
 import sklearn.metrics
@@ -196,13 +199,18 @@ def compute_metrics(dataset):
     [[true_negatives,false_positives],[false_negatives,true_positives]] = [[p0t0,p1t0],[p0t1,p1t1]] = confusion_matrix
     purity = true_positives/(true_positives + false_positives) # precision
     efficiency = true_positives/(true_positives + false_negatives) # recall
-    return [dataset.signal_intensity, predicted_signal_probabilities, confusion_matrix, purity, efficiency]
+    # TODO fare qui istogramma della separazione tra le due classi
+    # con predicted_signal_probabilities e true_classes
+    return [dataset.signal_intensity, confusion_matrix, purity, efficiency]
 
-for validation_dataset in validation_datasets:
-    print(compute_metrics(validation_dataset))
-    
+import glob
 
+validation_paths = sorted(glob.glob('/storage/users/Muciaccia/validation/**/*.netCDF4', recursive=True)) # TODO 10 risulta venire dopo 1
 
-
-
+metrics = []
+for path in validation_paths:
+    validation_dataset = xarray.open_dataset(path)
+    metrics.append(compute_metrics(validation_dataset)) # TODO valutare numpy strurctured array
+# TODO salvare i risultati su file
+# TODO fare vari plot dei risultati
 

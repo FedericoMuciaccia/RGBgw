@@ -421,8 +421,46 @@ pyplot.close()
 # Notice how the final element of the `fft` output is the complex conjugate of the second element, for real input. For `rfft`, this symmetry is exploited to compute only the non-negative frequency terms.
 
 
+# dimostrazione dell'invisibilità sottosoglia (signal_amplitude = 1)
 
+def peakmap(image):                                                    
+    copied_image = image.copy()                                        
+    # TODO controllare i bordi
+    maxima = numpy.array([numpy.convolve(numpy.sign(numpy.diff(copied_i
+    mage, axis=0))[:,i], [-1,1]) for i in range(image.shape[1])]).T == 2
+    # TODO controllare se è giusto prendere i massimi locali solo lungo la frequenza
+    under_threshold = copied_image < 2.5
+    maxima[under_threshold] = 0
+    return maxima.astype(int)
 
+def to_whitened(img):                                                  
+    return numpy.exp(img*10 - 7)
+
+img = images[random_signal_index]
+
+R = img[:,:,0]
+G = img[:,:,1]
+B = img[:,:,2]
+
+pyplot.figure(figsize=[10,10*256/148])
+pyplot.imshow(img, origin="lower", interpolation="none")
+pyplot.title('RGB image')
+pyplot.show()
+
+pyplot.figure(figsize=[10,10*256/148])
+pyplot.imshow(peakmap(to_whitened(R)), origin="lower", interpolation="none", cmap='gray_r')
+pyplot.title('peakmap')
+pyplot.show()
+
+pyplot.figure(figsize=[10,10*256/148])
+pyplot.imshow(peakmap(to_whitened(G)), origin="lower", interpolation="none", cmap='gray_r')
+pyplot.title('peakmap')
+pyplot.show()
+
+pyplot.figure(figsize=[10,10*256/148])
+pyplot.imshow(peakmap(to_whitened(B)), origin="lower", interpolation="none", cmap='gray_r')
+pyplot.title('peakmap')
+pyplot.show()
 
 
 
