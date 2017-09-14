@@ -128,17 +128,6 @@ number_of_time_values_in_one_FFT = FFT_lenght*time_sampling_rate
 unilateral_frequencies = numpy.linspace(0, Nyquist_frequency, int(number_of_time_values_in_one_FFT/2 + 1)) # TODO float32 or float64 ?
 frequency_resolution = 1/FFT_lenght
 
-number_of_chunks = int(len(t)/number_of_time_values_in_one_FFT)
-time_data = white_noise+signal
-chunks = numpy.split(time_data, number_of_chunks)
-time_shift = int(number_of_time_values_in_one_FFT/2)
-# TODO ottimizzare il codice e magari farlo con una funzione rolling
-middle_chunks = numpy.split(time_data[time_shift:-time_shift], number_of_chunks-1)
-middle_chunks.append(numpy.zeros_like(chunks[0])) # dummy empty chunk to be removed later
-# join and reorder odd and even chunks
-interlaced_chunks = numpy.transpose([chunks, middle_chunks], axes=[1,0,2]).reshape([2*number_of_chunks, -1])
-# TODO mettere finestra
-
 #pyplot.figure(figsize=[15,10])
 #pyplot.hist2d(t, white_noise, bins=[100,number_of_chunks])
 #pyplot.show()
@@ -184,6 +173,7 @@ def flat_top_cosine_edge_window(window_lenght = number_of_time_values_in_one_FFT
     
     return factor.astype(numpy.float32)
 
+# TODO duplicato
 window = flat_top_cosine_edge_window()
 
 if make_plot is True:
@@ -196,7 +186,27 @@ if make_plot is True:
     pyplot.savefig('/storage/users/Muciaccia/media/flat_top_cosine_edge_window.svg', dpi=300)
     pyplot.close()
 
+def make_chunks(time_data, windowed = False):
+    number_of_chunks = int(len(t)/number_of_time_values_in_one_FFT)
+    chunks = numpy.split(time_data, number_of_chunks)
+    time_shift = int(number_of_time_values_in_one_FFT/2)
+    # TODO ottimizzare il codice e magari farlo con una funzione rolling
+    middle_chunks = numpy.split(time_data[time_shift:-time_shift], number_of_chunks-1)
+    middle_chunks.append(numpy.zeros_like(chunks[0])) # dummy empty chunk to be removed later # TODO far in modo che tutto sia sempre in potenze di 2
+    # join and reorder odd and even chunks
+    interlaced_chunks = numpy.transpose([chunks, middle_chunks], axes=[1,0,2]).reshape([2*number_of_chunks, -1])
+    # TODO buttare l'ultimo chunk farlocco
+    if windowed is False:
+        return interlaced_chunks
+    if windowed is True:
+        window = flat_top_cosine_edge_window()
+        windowed_interlaced_chunks = interlaced_chunks*window
+        return windowed_interlaced_chunks
 
+time_data = white_noise+signal
+windowed_interlaced_chunks = make_chunks(time_data, windowed = True)
+
+#whos
 
 #index = numpy.arange(8192)
 #factor = index.copy()
@@ -218,21 +228,31 @@ if make_plot is True:
 #pyplot.show()
 
 
+def make_whitened_spectrogram(windowed_interlaced_chunks): # the fast Fourier transform needs power on two to be fast
+    unilateral_fft_data = numpy.fft.rfft(windowed_interlaced_chunks).astype(numpy.complex64) # the one-dimensional real fft is done on the innermost dimension of the array. the results are the unilateral frequencies, from 0 to the Nyquist frequency
+#unilateral_fft_data = numpy.fft.rfftn(windowed_interlaced_chunks, axes=[-1])
+    #unilateral_fft_data = list(map(numpy.fft.rfft, windowed_interlaced_chunks))
+    #unilateral_fft_data.pop() # remove the last dummy empty chunk # TODO
+    #unilateral_fft_data = numpy.array(unilateral_fft_data).astype(numpy.complex64)
+    # TODO vedere normalizzazione per la potenza persa
+    spectra = numpy.square(numpy.abs(unilateral_fft_data)) # TODO sqrt(2), normd, normw, etc etc
+    # TODO normd (normalizzare sul numero di dati)
+    spectrogram = numpy.transpose(spectra)
+    whitened_spectrogram = spectrogram/numpy.median(spectrogram)
+    return whitened_spectrogram # TODO valutare se inserire un dato fittizio per arrivare ad una potenza di 2
 
-windowed_interlaced_chunks = interlaced_chunks*window
+# TODO BUG: tensorflow non ha una versione di rfft che giri su CPU, quindi il codice non è portabile su tutti i dispositivi
+# TODO VEDERE tf.batch_fft2d
+# TODO VEDERE tf.contrib.signal ha delle routine per calcolare gli spettrogrammi
+# TODO BUG: numpy ha il grossissimo bug che computa molte cose (tipo la fft) in float64 e poi si deve convertire in float32, apendo però nel mentre occupato temporaneamente il doppio della RAM
 
-# TODO parallelizzare il calcolo sui vari chunks
-unilateral_fft_data = list(map(numpy.fft.rfft, windowed_interlaced_chunks))
-unilateral_fft_data.pop() # remove the last dummy empty chunk
-unilateral_fft_data = numpy.array(unilateral_fft_data).astype(numpy.complex64)
-# TODO unilatera (rfft) e bilatera (fft)
-# TODO rimettere ordine corretto nel caso complesso e shiftare lo zero
-# TODO vedere tipo di finestra e interlacciatura e normalizzazione per la potenza persa
-spectra = numpy.square(numpy.abs(unilateral_fft_data)) # TODO sqrt(2), normd, normw, etc etc
-# TODO normd (normalizzare sul numero di dati)
-spectrogram = numpy.transpose(spectra)
-whitened_spectrogram = spectrogram/numpy.median(spectrogram)
+make alias (tf.rftt is tf.spectral.rfft)
+messaggio Frankie
+mail Ricci per settore informatico
+Ubuntu per mia GPU
 
+
+whitened_spectrogram = make_whitened_spectrogram(windowed_interlaced_chunks)
 
 # TODO con la fft unilatera le frequenze non sono più divisibili in base 2 (e pure i tempi adesso sono 127)
 
@@ -423,6 +443,7 @@ pyplot.close()
 
 # dimostrazione dell'invisibilità sottosoglia (signal_amplitude = 1)
 
+# TODO duplicato
 def peakmap(image):                                                    
     copied_image = image.copy()                                        
     # TODO controllare i bordi
