@@ -49,7 +49,7 @@ network = tflearn.layers.estimator.regression(network, optimizer='adam', learnin
 
 model = tflearn.DNN(network, tensorboard_verbose=0) # 3
 
-# TODO mettere solo un neurone finale, provare batch_size 64, controllare feed_dict nell'altra rete, provare ad aumentare il segnale (mettendolo a 1), controllare summary della rete, mettere normalizzazione al posto corretto, fare la prova in bianconero, controllare i valori strani di validation loss and accuracy
+# TODO provare batch_size 64, controllare feed_dict nell'altra rete, controllare summary della rete, fare la prova in bianconero, controllare i valori strani di validation loss and accuracy
 
 # df/dt = spindown
 # 0-order pipeline
@@ -109,21 +109,23 @@ class EarlyStoppingCallback(tflearn.callbacks.Callback):
             raise StopIteration
 
 # load pretrained weights (to start closer to the minimum)
-model.load('/storage/users/Muciaccia/models/pretraining_amplitude_5.tflearn')
+model.load('/storage/users/Muciaccia/models/pretraining_amplitude_1.tflearn')
 
 # TODO mettere un if sull'attributo signal_intensity (ereditato dai dataset) per implementare il curriculum learning
 
 # training
+# TODO poi rimettere 30+10+15 epoche
 try:
     model.fit({'input':train_images}, {'target':train_classes}, n_epoch=50, validation_set=({'input':test_images}, {'target':test_classes}), snapshot_step=100, show_metric=True, callbacks=EarlyStoppingCallback()) # run_id='tflearn_conv_net_trial'
 except StopIteration:
     print('training finished!')
 
 # save the model
-model.save('/storage/users/Muciaccia/models/pretraining_amplitude_1.tflearn')
+model.save('/storage/users/Muciaccia/models/pretraining_amplitude_1_small.tflearn')
 
 # tempo pretraining con segnale a 10: 4 minuti, <30 epoche con 2500 immagini di train
 # tempo pretraining con segnale a 5: 1 minuto, <10 epoche
+# tempo pretraining con segnale a 1: 2 minuto, <15 epoche
 
 # TODO:
 # predizioni, grafici loss e accuracy/error, confusion_matrix
