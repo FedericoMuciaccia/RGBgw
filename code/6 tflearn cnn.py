@@ -35,8 +35,9 @@ network = tflearn.layers.core.input_data(shape=[None, height, width, channels], 
 #network = tflearn.layers.core.dropout(network, 0.8)
 for i in range(6): # 6 convolutional block is the maximum dept with the given image size
     network = tflearn.layers.conv.conv_2d(network, nb_filter=9, filter_size=3, strides=1, padding='valid', activation='linear', bias=True, weights_init='uniform_scaling', bias_init='zeros', regularizer=None, weight_decay=0) # regularizer='L2', weight_decay=0.001, scope=None
-    network = tflearn.layers.normalization.local_response_normalization(network)
+    # TODO batch_normalization
     network = tflearn.activation(network, activation='relu')
+    network = tflearn.layers.normalization.local_response_normalization(network) # TODO depth_radius=5, bias=1.0, alpha=0.0001, beta=0.75 interchannel or intrachannel?
     network = tflearn.layers.conv.max_pool_2d(network, kernel_size=2) # strides=None, padding='same'
     #network = tflearn.layers.normalization.local_response_normalization(network)
 network = tflearn.layers.core.flatten(network)

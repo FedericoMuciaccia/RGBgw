@@ -204,9 +204,8 @@ def make_chunks(time_data, windowed = False):
         return windowed_interlaced_chunks
 
 time_data = white_noise+signal
-windowed_interlaced_chunks = make_chunks(time_data, windowed = True)
 
-#whos
+#whos # per vedere tutte le variabili definite, residenti in memoria
 
 #index = numpy.arange(8192)
 #factor = index.copy()
@@ -227,32 +226,65 @@ windowed_interlaced_chunks = make_chunks(time_data, windowed = True)
 #pyplot.plot(dBV)
 #pyplot.show()
 
-
-def make_whitened_spectrogram(windowed_interlaced_chunks): # the fast Fourier transform needs power on two to be fast
+def make_whitened_spectrogram(time_data): # the fast Fourier transform needs power on two to be fast
+    windowed_interlaced_chunks = make_chunks(time_data, windowed = True)
     unilateral_fft_data = numpy.fft.rfft(windowed_interlaced_chunks).astype(numpy.complex64) # the one-dimensional real fft is done on the innermost dimension of the array. the results are the unilateral frequencies, from 0 to the Nyquist frequency
 #unilateral_fft_data = numpy.fft.rfftn(windowed_interlaced_chunks, axes=[-1])
     #unilateral_fft_data = list(map(numpy.fft.rfft, windowed_interlaced_chunks))
-    #unilateral_fft_data.pop() # remove the last dummy empty chunk # TODO
+    #unilateral_fft_data.pop()
     #unilateral_fft_data = numpy.array(unilateral_fft_data).astype(numpy.complex64)
     # TODO vedere normalizzazione per la potenza persa
     spectra = numpy.square(numpy.abs(unilateral_fft_data)) # TODO sqrt(2), normd, normw, etc etc
     # TODO normd (normalizzare sul numero di dati)
-    spectrogram = numpy.transpose(spectra)
+    spectrogram = numpy.transpose(spectra[0:-1]) # remove the last dummy empty chunk
     whitened_spectrogram = spectrogram/numpy.median(spectrogram)
+    # TODO in realtà facendo il whitening col periodogramma si eliminano tutti quei picchi che occupano diversi bin di frequenza, dunque si ripulirebbe l'effetto di allargamento sporco dovuto alla finestra della FFT
+    # TODO fare plot zoomato attorno alla riga, in modo da vedere i ghost laterali prima e dopo lo sbiancamento
     return whitened_spectrogram # TODO valutare se inserire un dato fittizio per arrivare ad una potenza di 2
 
 # TODO BUG: tensorflow non ha una versione di rfft che giri su CPU, quindi il codice non è portabile su tutti i dispositivi
 # TODO VEDERE tf.batch_fft2d
 # TODO VEDERE tf.contrib.signal ha delle routine per calcolare gli spettrogrammi
 # TODO BUG: numpy ha il grossissimo bug che computa molte cose (tipo la fft) in float64 e poi si deve convertire in float32, apendo però nel mentre occupato temporaneamente il doppio della RAM
+# TODO cercare un modo per forzare la computazione di numpy ad essere sempre fatta in float32
 
-make alias (tf.rftt is tf.spectral.rfft)
-messaggio Frankie
-mail Ricci per settore informatico
-Ubuntu per mia GPU
+whitened_spectrogram = make_whitened_spectrogram(time_data)
 
+if make_plot is True:
+    pyplot.figure(figsize=[15,10])
+    spectrum_with_signal_example = whitened_spectrogram[:,60]
+    #spectrum_median = numpy.median(spectrum_with_signal_example) # deve fare circa 1e-6
+    #pyplot.hlines(y=spectrum_median, xmin=0, xmax=unilateral_frequencies.size, color='black', label='spectrum median = {}'.format(spectrum_median), zorder=1) # TODO invece che la mediana plottare lo spettro autoregressivo
+    pyplot.semilogy(spectrum_with_signal_example, label='whitened spectrum', zorder=0) # grafico obbligatoriamente col logaritmo in y
+    pyplot.title('frequency spectrum')
+    pyplot.xticks((unilateral_frequencies.size*numpy.arange(5)/4).astype(int), (Nyquist_frequency*numpy.arange(5)/4).astype(int))
+    #pyplot.vlines(x=8192, ymin=1e-9, ymax=1e1, color='orange', label='1 Hz')
+    pyplot.xlabel('frequency [Hz]')
+    #pyplot.legend(loc='lower right', frameon=False)
+    #pyplot.show()
+    pyplot.savefig('/storage/users/Muciaccia/media/white_noise_complete_whitened_spectrum_with_injected_signal.jpg')#, dpi=300)
+    pyplot.close()
+    # TODO WISHLIST: spectrogram[all,1]
 
-whitened_spectrogram = make_whitened_spectrogram(windowed_interlaced_chunks)
+########################################
+#mail Ricci per settore informatico
+#Ubuntu per mia GPU
+########################################
+#
+#la function per l'autoregressivo si chiama int short_psar_rev_freq
+#
+#il periodogramma invece e’ standard…dividi i dati i sottoperiodi ne fai lo spettro e poi la media.
+#
+#matched filtering for delta-like signals
+#identification of the events
+#removal of the events
+#
+#media non parametrica fatta con spline? (valore del polinomio fatto in modo da ottimizzare il fit senza overfitting ed underfitting, magari con valore anche variabile nel tempo?)
+#regolarizzare il rumore non-stazionario la cui forma non è nota a priori
+#poi fare il whitening rispetto a questa curva (considerando anche la varianza variabile nel tempo del segnale iniziale?)
+#fare un operazione direttamente sui dati grezzi nel dominio del tempo?
+#invece che fare un semplice downsampling dei dati iniziali, si può fare uno smooting gaussiano o un qualche tipo di regolarizzazione per ridurre le fluttuazioni che non serve osservare?
+########################################
 
 # TODO con la fft unilatera le frequenze non sono più divisibili in base 2 (e pure i tempi adesso sono 127)
 
@@ -263,36 +295,21 @@ whitened_spectrogram = make_whitened_spectrogram(windowed_interlaced_chunks)
 # simulare rumore bianco in frequenza direttamente con una gaussiana di larghezza 1/sigma # TODO corretto? grafici lin VS logy? si intendono le due gaussiane reale e immaginaria dell'esito della FFT?
 # finestra flat_coseno per minimizzare l'allargamento di segnali che variano un poco in frequenza (per smussare i bordi). e dunque c'è poi la necessità di buttare i bordi mediante le FFt interallacciate. (minimizzare i ghost laterali della delta di Dirac allargata della sinusoide e/o massimizzare l'altezza del picco). poi usare normw per tenere in conto della potenza persa ai bordi della finestra rispetto alla funzione gradino (fattore comuque vicino ad 1). tutti fattori da rimoltiplicare per controbilanciare la perdita di potenza spettrale
 
-if make_plot is True:
-    pyplot.figure(figsize=[15,10])
-    spectrum_median = numpy.median(spectra[0]) # deve fare circa 1e-6
-    pyplot.hlines(y=spectrum_median, xmin=0, xmax=unilateral_frequencies.size, color='black', label='spectrum median = {}'.format(spectrum_median), zorder=1) # TODO invece che la mediana plottare lo spettro autoregressivo
-    pyplot.semilogy(spectra[60], label='raw spectrum', zorder=0) # grafico obbligatoriamente col logaritmo in y
-    pyplot.title('frequency spectrum')
-    pyplot.xticks((unilateral_frequencies.size*numpy.arange(5)/4).astype(int), (Nyquist_frequency*numpy.arange(5)/4).astype(int))
-    #pyplot.vlines(x=8192, ymin=1e-9, ymax=1e1, color='orange', label='1 Hz')
-    pyplot.xlabel('frequency [Hz]')
-    pyplot.legend(loc='lower right', frameon=False)
-    #pyplot.show()
-    pyplot.savefig('/storage/users/Muciaccia/media/white_noise_complete_spectrum_with_injected_signal.jpg')#, dpi=300)
-    pyplot.close()
-    # TODO WISHLIST: spectrogram[all,1]
-
-frequency_values_in_one_Hz = 8192 # TODO hardcoded
-middle_index = frequency_values_in_one_Hz*signal_starting_frequency
-image_range = slice(middle_index-128,middle_index+128)
-
 #pyplot.figure(figsize=[15,10])
 #pyplot.hist(numpy.log10(spectrogram[image_range].flatten()), bins=300) # log10
 #pyplot.show()
 ## TODO valutarre la sovrapponibilità coi dati veri (dopo aver correttamnete normalizzato tutto)
 
-image = whitened_spectrogram[image_range]
+frequency_values_in_one_Hz = 8192 # TODO hardcoded
+middle_index = frequency_values_in_one_Hz*signal_starting_frequency
+frequency_range = slice(middle_index-128,middle_index+128)
+
+image = whitened_spectrogram[frequency_range]
 
 if make_plot is True:
     pyplot.figure(figsize=[15,10])
-    pyplot.hist(numpy.log10(image.flatten()), bins=300) #log10
-    pyplot.vlines(x=numpy.log10(2.5), ymin=0, ymax=900, color='orange', label='peakmap threshold = 2.5') # sqrt(2.5)
+    pyplot.hist(numpy.log10(image.flatten()), bins=300)
+    pyplot.vlines(x=numpy.log10(2.5), ymin=0, ymax=900, color='orange', label='peakmap threshold = 2.5')
     linear_ticks = numpy.linspace(-5, 5, num=11)
     log_labels = ['10^{}'.format(int(i)) for i in linear_ticks]
     pyplot.xticks(linear_ticks, log_labels)
@@ -307,18 +324,32 @@ if make_plot is True:
 # NOTE: FFT (Fast Fourier Transform) refers to a way the discrete Fourier Transform (DFT) can be calculated efficiently, by using symmetries in the calculated terms. The symmetry is highest when `n` is a power of 2, and the transform is therefore most efficient for these sizes.
 
 pyplot.figure(figsize=[10,10*256/148])
-pyplot.imshow(numpy.log(image), origin="lower", interpolation="none", cmap='gray')
-pyplot.title('whitened spectrogram (log values)')
+pyplot.imshow(numpy.log10(image), origin="lower", interpolation="none", cmap='gray')
+pyplot.title('whitened spectrogram (log10 values)')
+# TODO mettere linea a time_index = 60 per far capire dove si posiziona il plot successivo
 #pyplot.colorbar()
 #pyplot.show()
 pyplot.savefig('/storage/users/Muciaccia/media/white_noise_image_with_signal_scale_factor_{}.jpg'.format(signal_scale_factor), dpi=300)
 pyplot.close()
 
+if make_plot is True:
+    pyplot.figure(figsize=[15,10])
+    vertical_slice = image[:,60]
+    pyplot.semilogy(vertical_slice, label='raw spectrum')
+    pyplot.title('vertical slice of the image')
+    pyplot.xlabel('frequency index')
+    pyplot.ylabel('pixel value')
+    #pyplot.show()
+    pyplot.savefig('/storage/users/Muciaccia/media/vertical_slice.svg', dpi=300)
+    pyplot.close()
+# TODO fare deconvoluzione per accentuare e stringere il picco?
+
+# TODO la derivata prima dovrebbe essere più rumorosa dei dati originali, quindi ci dovrebbe essere un modo per migliorare la peakmap facendo una derivata multiscala, con kernel sempre maggiori
 def peakmap(image):
-    copied_image = image.copy()
+    copied_image = image.copy() # here without log10
     # TODO controllare i bordi
     maxima = numpy.array([numpy.convolve(numpy.sign(numpy.diff(copied_image, axis=0))[:,i], [-1,1]) for i in range(image.shape[1])]).T == 2
-    # TODO controllare se è giusto prendere i massimi locali solo lungo la frequenza
+    # TODO sarebbe forse più corretto prendere i massimi locali lungo la direzione dello spindown, invece che in quella orizzontale della finestra
     under_threshold = copied_image < 2.5
     maxima[under_threshold] = 0
     return maxima.astype(int)
@@ -440,19 +471,9 @@ pyplot.close()
 # If `n` is odd, the length is ``(n+1)/2``.
 # Notice how the final element of the `fft` output is the complex conjugate of the second element, for real input. For `rfft`, this symmetry is exploited to compute only the non-negative frequency terms.
 
+exit()
 
 # dimostrazione dell'invisibilità sottosoglia (signal_amplitude = 1)
-
-# TODO duplicato
-def peakmap(image):                                                    
-    copied_image = image.copy()                                        
-    # TODO controllare i bordi
-    maxima = numpy.array([numpy.convolve(numpy.sign(numpy.diff(copied_i
-    mage, axis=0))[:,i], [-1,1]) for i in range(image.shape[1])]).T == 2
-    # TODO controllare se è giusto prendere i massimi locali solo lungo la frequenza
-    under_threshold = copied_image < 2.5
-    maxima[under_threshold] = 0
-    return maxima.astype(int)
 
 def to_whitened(img):                                                  
     return numpy.exp(img*10 - 7)
@@ -470,17 +491,17 @@ pyplot.show()
 
 pyplot.figure(figsize=[10,10*256/148])
 pyplot.imshow(peakmap(to_whitened(R)), origin="lower", interpolation="none", cmap='gray_r')
-pyplot.title('peakmap')
+pyplot.title('peakmap R')
 pyplot.show()
 
 pyplot.figure(figsize=[10,10*256/148])
 pyplot.imshow(peakmap(to_whitened(G)), origin="lower", interpolation="none", cmap='gray_r')
-pyplot.title('peakmap')
+pyplot.title('peakmap G')
 pyplot.show()
 
 pyplot.figure(figsize=[10,10*256/148])
 pyplot.imshow(peakmap(to_whitened(B)), origin="lower", interpolation="none", cmap='gray_r')
-pyplot.title('peakmap')
+pyplot.title('peakmap G')
 pyplot.show()
 
 
