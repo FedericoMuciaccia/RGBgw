@@ -108,24 +108,36 @@ class EarlyStoppingCallback(tflearn.callbacks.Callback):
             print('train accuracy is 1')
             raise StopIteration
 
+signal_amplitudes = [None, 10, 5, 1, None]
+previous_signal_amplitude = 1
+current_signal_amplitude = None
+
 # load pretrained weights (to start closer to the minimum)
-model.load('/storage/users/Muciaccia/models/pretraining_amplitude_1.tflearn')
+model.load('/storage/users/Muciaccia/models/pretraining_amplitude_{}.tflearn'.format(previous_signal_amplitude))
 
 # TODO mettere un if sull'attributo signal_intensity (ereditato dai dataset) per implementare il curriculum learning
 
 # training
 # TODO poi rimettere 30+10+15 epoche
-try:
-    model.fit({'input':train_images}, {'target':train_classes}, n_epoch=50, validation_set=({'input':test_images}, {'target':test_classes}), snapshot_step=100, show_metric=True, callbacks=EarlyStoppingCallback()) # run_id='tflearn_conv_net_trial'
-except StopIteration:
-    print('training finished!')
+def train(number_of_epochs = 50):
+    try:
+        model.fit({'input':train_images}, {'target':train_classes}, n_epoch=50, validation_set=({'input':test_images}, {'target':test_classes}), snapshot_step=100, show_metric=True, callbacks=EarlyStoppingCallback()) # run_id='tflearn_conv_net_trial'
+    except StopIteration:
+        print('training finished!')
 
-# save the model
-model.save('/storage/users/Muciaccia/models/pretraining_amplitude_1_small.tflearn')
+    # save the model
+    model.save('/storage/users/Muciaccia/models/pretraining_amplitude_{}.tflearn'.format(current_signal_amplitude))
+    # TODO save (append) the training history
+
+if current_signal_amplitude is not None: # TODO fare anche caso iniziale
+    train()
+
+else:
+    pass # TODO validate() # TODO non validare se ancora deve essere finito il curriculum learning? oppure far vedere l'incremento
 
 # tempo pretraining con segnale a 10: 4 minuti, <30 epoche con 2500 immagini di train
 # tempo pretraining con segnale a 5: 1 minuto, <10 epoche
-# tempo pretraining con segnale a 1: 2 minuto, <15 epoche
+# tempo pretraining con segnale a 1: 2 minuti, <15 epoche
 
 # TODO:
 # predizioni, grafici loss e accuracy/error, confusion_matrix
@@ -147,29 +159,26 @@ model.save('/storage/users/Muciaccia/models/pretraining_amplitude_1_small.tflear
 
 
 
-exit()
 
 
-
-
-model.evaluate(test_images[0:1024],test_classes[0:1024], batch_size=64)
-
-tf.confusion_matrix(labels=test_classes[0:1024,1], predictions=model.predict(test_images[0:1024])[0:1024,1]).eval()
-
-# TODO BUG: non sembra possibile avere i pesi di tflearn caricati nel grafo di tensorflow
-# TODO BUG: tflearn non supporta il model.predict out-of-memory, costringendo a caricare tutto il dataset in memoria
-# TODO BUG: ci vorrebbe il parametro batch_size pure per model.predict()
-model.predict
-model.net # sembra avere i pesi non inizializzati persino dopo model.load
-
-model.net.eval(feed_dict={'input/X:0':test_images[0:64]})
-
-model.predict(test_images[0:64])
-
-sess = tf.InteractiveSession()
-sess.run(tf.global_variables_initializer())
-
-network.eval(feed_dict={'input_1/X:0':test_images[0:64]})
+#model.evaluate(test_images[0:1024],test_classes[0:1024], batch_size=64)
+#
+#tf.confusion_matrix(labels=test_classes[0:1024,1], predictions=model.predict(test_images[0:1024])[0:1024,1]).eval()
+#
+## TODO BUG: non sembra possibile avere i pesi di tflearn caricati nel grafo di tensorflow
+## TODO BUG: tflearn non supporta il model.predict out-of-memory, costringendo a caricare tutto il dataset in memoria
+## TODO BUG: ci vorrebbe il parametro batch_size pure per model.predict()
+#model.predict
+#model.net # sembra avere i pesi non inizializzati persino dopo model.load
+#
+#model.net.eval(feed_dict={'input/X:0':test_images[0:64]})
+#
+#model.predict(test_images[0:64])
+#
+#sess = tf.InteractiveSession()
+#sess.run(tf.global_variables_initializer())
+#
+#network.eval(feed_dict={'input_1/X:0':test_images[0:64]})
 
 
 
@@ -204,11 +213,12 @@ def compute_metrics(dataset):
     efficiency = true_positives/(true_positives + false_negatives) # recall
     # TODO fare qui istogramma della separazione tra le due classi
     # con predicted_signal_probabilities e true_classes
+    # TODO mettere anche accuracy
     return [dataset.signal_intensity, confusion_matrix, purity, efficiency]
 
 import glob
 
-validation_paths = sorted(glob.glob('/storage/users/Muciaccia/validation/**/*.netCDF4', recursive=True)) # TODO 10 risulta venire dopo 1
+validation_paths = sorted(glob.glob('/storage/users/Muciaccia/validation/**/*.netCDF4', recursive=True)) # TODO 10 risulta venire dopo 1 e non dopo 9
 
 metrics = []
 for path in validation_paths:
@@ -216,4 +226,6 @@ for path in validation_paths:
     metrics.append(compute_metrics(validation_dataset)) # TODO valutare numpy strurctured array
 # TODO salvare i risultati su file
 # TODO fare vari plot dei risultati
+
+print(metrics)
 
