@@ -30,8 +30,15 @@ number_of_train_samples, number_of_classes = train_classes.shape
 
 import tflearn
 
+# no data preprocessing is required
+
+# data augmentation
+image_augmentation = tflearn.ImageAugmentation()
+image_augmentation.add_random_flip_leftright()
+image_augmentation.add_random_flip_updown()
+
 # build the convolutional network
-network = tflearn.layers.core.input_data(shape=[None, height, width, channels], name='input')
+network = tflearn.layers.core.input_data(shape=[None, height, width, channels], data_augmentation=image_augmentation, name='input')
 #network = tflearn.layers.core.dropout(network, 0.8)
 for i in range(6): # 6 convolutional block is the maximum dept with the given image size
     network = tflearn.layers.conv.conv_2d(network, nb_filter=9, filter_size=3, strides=1, padding='valid', activation='linear', bias=True, weights_init='uniform_scaling', bias_init='zeros', regularizer=None, weight_decay=0) # regularizer='L2', weight_decay=0.001, scope=None
@@ -109,8 +116,8 @@ class EarlyStoppingCallback(tflearn.callbacks.Callback):
             raise StopIteration
 
 signal_amplitudes = [None, 10, 5, 1, None]
-previous_signal_amplitude = 1
-current_signal_amplitude = None
+previous_signal_amplitude = 5
+current_signal_amplitude = 1
 
 # load pretrained weights (to start closer to the minimum)
 model.load('/storage/users/Muciaccia/models/pretraining_amplitude_{}.tflearn'.format(previous_signal_amplitude))
@@ -193,9 +200,10 @@ import sklearn.metrics
 def predict_in_chunks(images):
     predictions = []
     chunk_size = 256
-    chunks = numpy.split(images, chunk_size)
+    number_of_chunks = len(images)/chunk_size
+    chunks = numpy.split(images, number_of_chunks)
     for chunk in chunks:
-        predictions.append(model.predict(chunk))
+        predictions.append(model.predict(chunk[:,:,0:128,:])) # TODO HACK
         # the last activation function of the network is a softmax
         # so the predictions are the probability for the various classes
         # they sum up to 1
@@ -228,4 +236,33 @@ for path in validation_paths:
 # TODO fare vari plot dei risultati
 
 print(metrics)
+
+
+# signal_intensity, confusion_matrix, purity, efficiency
+# 1   1221    42      0.9606    0.7895
+#     273     1024
+# 2   1246    38      0.9708    0.9914
+#     11      1265
+# 3   1216    42      0.9687    0.9985
+#     2       1300
+# 4   1213    38      0.9718    1.0
+#     0       1309
+# 5   1215    38      0.9717    1.0
+#     0       1307
+# 6   1284    39      0.9694    1.0
+#     0       1237
+# 7   1235    40      0.9698    1.0
+#     0       1285
+# 8   1251    41      0.9687    1.0
+#     0       1268
+# 9   1261    42      0.9676    0.9992
+#     1       1256
+# 10  1271    35      0.9728    1.0
+#     0       1254
+
+
+
+
+
+
 
