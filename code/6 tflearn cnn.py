@@ -113,10 +113,10 @@ class EarlyStoppingCallback(tflearn.callbacks.Callback):
         if training_state.acc_value > 0.9999: # when the training accuracy is 1 the model cannot learn further
             print('train accuracy is 1')
             raise StopIteration
-    #def on_batch_end(self, training_state, snapshot):
-        loss_ratio = training_state.loss_value / training_state.val_loss
-        accuracy_ratio = training_state.acc_value / training_state.val_acc
-        print(loss_ratio, accuracy_ratio)
+        # TODO early stopping automatico per evitare l'overfitting
+        #loss_ratio = training_state.loss_value / training_state.val_loss
+        #accuracy_ratio = training_state.acc_value / training_state.val_acc
+        #print(loss_ratio, accuracy_ratio)
 
 signal_amplitudes = [None, 10, 5, 1, None]
 previous_signal_amplitude = 5
@@ -128,8 +128,8 @@ model.load('/storage/users/Muciaccia/models/pretraining_amplitude_{}.tflearn'.fo
 # TODO mettere un if sull'attributo signal_intensity (ereditato dai dataset) per implementare il curriculum learning
 
 # training
-# TODO poi rimettere 30+10+15 epoche
-def train(number_of_epochs = 50):
+# TODO poi rimettere 30+10+10 epoche
+def train(number_of_epochs = 10):
     try:
         model.fit({'input':train_images}, {'target':train_classes}, n_epoch=number_of_epochs, validation_set=({'input':test_images}, {'target':test_classes}), snapshot_step=100, show_metric=True, callbacks=EarlyStoppingCallback()) # run_id='tflearn_conv_net_trial'
     except StopIteration:
