@@ -114,9 +114,9 @@ class EarlyStoppingCallback(tflearn.callbacks.Callback):
             print('train accuracy is 1')
             raise StopIteration
     #def on_batch_end(self, training_state, snapshot):
-        loss_asymmetry = (training_state.loss_value - training_state.val_loss)/(training_state.loss_value + training_state.val_loss)
-        accuracy_asymmetry = (training_state.acc_value - training_state.val_acc)/(training_state.acc_value + training_state.val_acc)
-        print(loss_asymmetry, accuracy_asymmetry)
+        loss_ratio = training_state.loss_value / training_state.val_loss
+        accuracy_ratio = training_state.acc_value / training_state.val_acc
+        print(loss_ratio, accuracy_ratio)
 
 signal_amplitudes = [None, 10, 5, 1, None]
 previous_signal_amplitude = 5
