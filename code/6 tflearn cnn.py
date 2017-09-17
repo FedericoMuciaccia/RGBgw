@@ -220,16 +220,19 @@ def compute_metrics(dataset):
     true_classes = dataset.classes[:,1]
     confusion_matrix = sklearn.metrics.confusion_matrix(true_classes, predicted_classes)
     [[true_negatives,false_positives],[false_negatives,true_positives]] = [[p0t0,p1t0],[p0t1,p1t1]] = confusion_matrix
+    # NOTA: fino a segnale 2 i falsi negativi sono pochissimi ed invece i falsi positivi sono parecchi
+    # serve fare un trainig a 2
+    # serve fare validation più fitta, coi mezzi punti
     purity = true_positives/(true_positives + false_positives) # precision
     efficiency = true_positives/(true_positives + false_negatives) # recall
     # TODO fare qui istogramma della separazione tra le due classi
     # con predicted_signal_probabilities e true_classes
     # TODO mettere anche accuracy
-    return [dataset.signal_intensity, confusion_matrix, purity, efficiency]
+    return [dataset.signal_intensity, true_negatives, false_positives, false_negatives, true_positives, purity, efficiency]
 
 import glob
 
-validation_paths = sorted(glob.glob('/storage/users/Muciaccia/validation/**/*.netCDF4', recursive=True)) # TODO 10 risulta venire dopo 1 e non dopo 9
+validation_paths = glob.glob('/storage/users/Muciaccia/validation/**/*.netCDF4', recursive=True) # TODO 10 risulta venire dopo 1 e non dopo 9
 
 metrics = []
 for path in validation_paths:
@@ -238,8 +241,12 @@ for path in validation_paths:
 # TODO salvare i risultati su file
 # TODO fare vari plot dei risultati
 
-print(metrics)
+import pandas
 
+metrics = pandas.DataFrame(metrics, columns=['signal_intensity', 'true_negatives', 'false_positives', 'false_negatives', 'true_positives', 'purity', 'efficiency'])
+metrics.sort_values(by='signal_intensity', inplace=True)
+
+print(metrics)
 
 # signal_intensity, confusion_matrix, purity, efficiency
 # 1   1221    42      0.9606    0.7895
