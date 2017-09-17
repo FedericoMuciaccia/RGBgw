@@ -31,14 +31,13 @@ number_of_train_samples, number_of_classes = train_classes.shape
 import tflearn
 
 # no data preprocessing is required
-
-# data augmentation
-image_augmentation = tflearn.ImageAugmentation()
-image_augmentation.add_random_flip_leftright()
-image_augmentation.add_random_flip_updown()
+# data augmentation # TODO BUG of tflearn (core dumped)
+#image_augmentation = tflearn.ImageAugmentation()
+#image_augmentation.add_random_flip_leftright()
+#image_augmentation.add_random_flip_updown()
 
 # build the convolutional network
-network = tflearn.layers.core.input_data(shape=[None, height, width, channels], data_augmentation=image_augmentation, name='input')
+network = tflearn.layers.core.input_data(shape=[None, height, width, channels], name='input') # TODO data_augmentation=image_augmentation
 #network = tflearn.layers.core.dropout(network, 0.8)
 for i in range(6): # 6 convolutional block is the maximum dept with the given image size
     network = tflearn.layers.conv.conv_2d(network, nb_filter=9, filter_size=3, strides=1, padding='valid', activation='linear', bias=True, weights_init='uniform_scaling', bias_init='zeros', regularizer=None, weight_decay=0) # regularizer='L2', weight_decay=0.001, scope=None
@@ -114,6 +113,8 @@ class EarlyStoppingCallback(tflearn.callbacks.Callback):
         if training_state.acc_value > 0.9999: # when the training accuracy is 1 the model cannot learn further
             print('train accuracy is 1')
             raise StopIteration
+        loss_asymmetry = (training_state.loss_value - training_state.val_loss)/(training_state.loss_value + training_state.val_loss)
+        print(loss_asymmetry)
 
 signal_amplitudes = [None, 10, 5, 1, None]
 previous_signal_amplitude = 5
