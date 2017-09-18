@@ -518,7 +518,8 @@ def process_file(file_path):
     attributes = {'FFT_lenght': fft_lenght,
                   'observing_run': 'O2', # TODO hardcoded (estrarlo dal file path)
                   'calibration': 'C01', # TODO hardcoded
-                  'maximum_frequency': maximum_frequency, # TODO hardcoded
+                  'maximum_frequency': maximum_frequency, # TODO hardcoded (Nyquist_frequency = time_sampling_rate/2)
+                  # TODO mettere anche time_sampling_rate = 256 Hz (parametro importante)
                   'start_ISO_time': human_readable_start_time} # TODO metterlo come attibuto del singolo spettrogramma (e levarlo dal file complessivo)
     # TODO mettere anche tutti gli altri attributi interessanti come 'FFT_interlaced' = 1 # TODO BUG: True (booleano) non se lo piglia
     
