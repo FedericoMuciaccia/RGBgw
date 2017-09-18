@@ -246,6 +246,7 @@ downsampled_combined_time_stability = cutted_combined_time_stability.reshape(num
 time_index_slices = numpy.array([slice(i*image_time_pixels,(i+1)*image_time_pixels) for i in range(number_of_time_slices)]) # TODO scriverlo meglio
 good_time_index_slices = time_index_slices[downsampled_combined_time_stability > 0.25] # > 25% # TODO hardcoded
 # TODO plottare nel grafico precedente questa tassellazione
+print(downsampled_combined_time_stability)
 print(good_time_index_slices)
 
 
