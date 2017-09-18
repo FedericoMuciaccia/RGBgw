@@ -62,7 +62,7 @@ V_dataset = xarray.open_mfdataset('/storage/users/Muciaccia/netCDF4/O2/C01/128Hz
 
 # VSR4 shifted in time and amplitude
 time_lenght = len(V_dataset.time)
-start_time_index = 650 #0 # TODO metterlo come data che è più elegante
+start_time_index = 1100 #650 #0 # TODO metterlo come data che è più elegante
 new_times = H_dataset.time.isel(drop=True, time=slice(start_time_index,start_time_index+time_lenght)) # TODO dataset.isel({'time':slice(...), 'frequency':slice(...)})
 # TODO artificially shift the VSR4 starting time
 V_dataset.update({'time':new_times}) # V_dataset['time'] = new_times
@@ -215,7 +215,7 @@ combined_time_stability = time_stability(globally_science_ready.values)
 pyplot.figure(figsize=[15,10])
 pyplot.plot(H_time_stability, label='LIGO Hanford', color='#ff2d33') # plot per vedere come evolve nel tempo la bontà dei dati (loro densità temporale locale in funzione del tempo)
 pyplot.plot(L_time_stability, label='LIGO Livingston', color='#208033')
-pyplot.plot(V_time_stability, label='Virgo', color='#3366ff')
+pyplot.plot(V_time_stability, label='Virgo (VSR4 shifted)', color='#3366ff')
 pyplot.plot(combined_time_stability, label='all detectors together', color='#404040')
 #pyplot.axhline(y=acceptable_percentage, color='green', label='acceptable level ({}%)'.format(int(acceptable_percentage*100)))
 pyplot.axhline(y=0.25, color='orange', label='acceptable level (25%)')
@@ -225,14 +225,13 @@ pyplot.xticks(time_ticks, month_labels)
 pyplot.ylabel('density of FFTs on 1-week timescale') # TODO vedere nome migliore
 #pyplot.xlim([0,5*month]) # TODO
 pyplot.ylim([0,1])
-pyplot.legend(loc='upper right', frameon=False)
+pyplot.legend(loc='upper left', frameon=False)
 #pyplot.show()
 pyplot.savefig('/storage/users/Muciaccia/media/time_stability.svg', dpi=300)
 pyplot.close()
 # TODO sistemare i colori
 # TODO mettere legenda con due label con detector e caratteristiche del run e tick temporali coi mesi
 # TODO mettere legenda in RGB, così come tutte le 3+1 (CMY + W) possibili combinazioni di detector simultanei
-
 
 combined_time_stability[numpy.isnan(combined_time_stability)] = 0
 
@@ -241,12 +240,12 @@ number_of_time_slices = int(numpy.floor(len(combined_time_stability)/image_time_
 cutted_combined_time_stability = combined_time_stability[0:number_of_time_slices*image_time_pixels]
 # i dati alla fine vengono esclusi in attesa di completare l'ultima immagine # TODO attenzione che si possono perdere scoperte in questo modo
 # poi in futuro inserire interlacciatura a metà o a quarti (sempre potenze di 2) e assicurare la presenza degli ultimi dati
-# TODO tassellazione provvisoria
+# TODO tassellazione provvisoria (fatta senza interallacciature)
 downsampled_combined_time_stability = cutted_combined_time_stability.reshape(number_of_time_slices, image_time_pixels).mean(axis=1)
 
 time_index_slices = numpy.array([slice(i*image_time_pixels,(i+1)*image_time_pixels) for i in range(number_of_time_slices)]) # TODO scriverlo meglio
 good_time_index_slices = time_index_slices[downsampled_combined_time_stability > 0.25] # > 25%
-
+# TODO plottare nel grafico precedente questa tassellazione
 
 
 #nan_tolerance = 0.3 # 30%
@@ -261,7 +260,7 @@ good_time_index_slices = time_index_slices[downsampled_combined_time_stability >
 good_slices = []
 good_index = numpy.argmax(combined_time_stability)
 #while combined_time_stability[good_index] >= minimum_acceptable_combined_density:
-while len(good_slices) < 2: # TODO incrementare le dimensioni del dataset
+while len(good_slices) < 3: # TODO incrementare le dimensioni del dataset
     # TODO attenzione che ci sono spesso sovrapposizioni # TODO assicurare una corretta tassellazione
     half_interval = int(time_pixels(default_time_scale)/2) # TODO assicurarsi del giusto arrotondamento
     good_slice = slice(good_index-half_interval, good_index+half_interval)
@@ -269,6 +268,7 @@ while len(good_slices) < 2: # TODO incrementare le dimensioni del dataset
     combined_time_stability[good_slice] = 0
     good_index = numpy.argmax(combined_time_stability)
 best_slice = good_slices[1]
+# TODO mettere le zone di dati prese come bande verticali verdine nel plot precedente
 
 # TODO BUG: non funziona l'immagine RGB
 fig = pyplot.figure(figsize=[7,15])

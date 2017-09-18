@@ -504,6 +504,24 @@ pyplot.imshow(peakmap(to_whitened(B)), origin="lower", interpolation="none", cma
 pyplot.title('peakmap G')
 pyplot.show()
 
+# from dense to sparse
+
+rows, columns = peakmap.nonzero() # int64
+# TODO trasformare in frequenze e tempi, partendo dagli indici e moltiplicando per la precisione in frequenze e tempi
+# TODO salvare in .mat
+# TODO mettere t, f, weights, df, dt, f_min=80, f_max=120, t_start, t_end, velocity, ecc...
+# TODO dare a Iuri 10 dataset da 4 grandi peakmap ognumo
+# TODO assemblare tutte le paekmap
+# TODO mettere in .h5 o .npy ?
+# TODO duplicare i dati di VSR4 per avere più dati e poi aggiungere i dati veri di Virgo ad agosto. oppure spostare VSR4 a destra in modo da rosicchiare dati nella parte finale dove i due detector veri sono più stabili
+# TODO valutare se fare 2 settimane ma con spindown più bassi, come li usano loro
+
+# TODO VEDERE SE SPETTRO SBIANCATO È USABILE PURE SOTTO 80 Hz e sopra 120 Hz
+
+
+
+
+
 
 
 

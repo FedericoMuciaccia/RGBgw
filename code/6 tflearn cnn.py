@@ -216,7 +216,7 @@ def predict_in_chunks(images):
 def compute_metrics(dataset):
     predictions = predict_in_chunks(dataset.images)
     predicted_signal_probabilities = predictions[:,1]
-    predicted_classes = numpy.round(predicted_signal_probabilities)
+    predicted_classes = numpy.round(predicted_signal_probabilities) # TODO vedere dall'istogramma dove deve essere messa la soglia ottimale
     true_classes = dataset.classes[:,1]
     confusion_matrix = sklearn.metrics.confusion_matrix(true_classes, predicted_classes)
     [[true_negatives,false_positives],[false_negatives,true_positives]] = [[p0t0,p1t0],[p0t1,p1t1]] = confusion_matrix
@@ -237,9 +237,14 @@ validation_paths = glob.glob('/storage/users/Muciaccia/validation/**/*.netCDF4',
 metrics = []
 for path in validation_paths:
     validation_dataset = xarray.open_dataset(path)
-    metrics.append(compute_metrics(validation_dataset)) # TODO valutare numpy strurctured array
+    metrics.append(compute_metrics(validation_dataset))
+
 # TODO salvare i risultati su file
 # TODO fare vari plot dei risultati
+
+# TODO considerare il fatto che le immagini sono troncate da 148 a 128
+
+# TODO magari fare anche la validation col rumore bianco senza buchi (e con la vera ampiezza relativa del regnale)
 
 import pandas
 
@@ -248,28 +253,32 @@ metrics.sort_values(by='signal_intensity', inplace=True)
 
 print(metrics)
 
-# signal_intensity, confusion_matrix, purity, efficiency
-# 1   1221    42      0.9606    0.7895
-#     273     1024
-# 2   1246    38      0.9708    0.9914
-#     11      1265
-# 3   1216    42      0.9687    0.9985
-#     2       1300
-# 4   1213    38      0.9718    1.0
-#     0       1309
-# 5   1215    38      0.9717    1.0
-#     0       1307
-# 6   1284    39      0.9694    1.0
-#     0       1237
-# 7   1235    40      0.9698    1.0
-#     0       1285
-# 8   1251    41      0.9687    1.0
-#     0       1268
-# 9   1261    42      0.9676    0.9992
-#     1       1256
-# 10  1271    35      0.9728    1.0
-#     0       1254
+# TODO serve del reinforcement learning per evitare tutti questi falsi positivi?
+# TODO far fare il primo addestramento con rumore bianco? (oppure mischiare i dataset di rumore bianco e rumore vero coi buchi)
 
+#  signal_intensity  true_negatives  false_positives  false_negatives  \
+#                 1            1159              104              112   
+#                 2            1180              104                3   
+#                 3            1153              105                1   
+#                 4            1151              100                0   
+#                 5            1153              100                0   
+#                 6            1215              108                0   
+#                 7            1168              107                0   
+#                 8            1180              112                0   
+#                 9            1199              104                0   
+#                10            1216               90                0   
+#
+#  true_positives    purity  efficiency  
+#            1185  0.919317    0.913647  
+#            1273  0.924473    0.997649  
+#            1301  0.925320    0.999232  
+#            1309  0.929028    1.000000  
+#            1307  0.928927    1.000000  
+#            1237  0.919703    1.000000  
+#            1285  0.923132    1.000000  
+#            1268  0.918841    1.000000  
+#            1257  0.923586    1.000000  
+#            1254  0.933036    1.000000  
 
 
 
