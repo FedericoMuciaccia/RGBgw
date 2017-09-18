@@ -240,12 +240,13 @@ number_of_time_slices = int(numpy.floor(len(combined_time_stability)/image_time_
 cutted_combined_time_stability = combined_time_stability[0:number_of_time_slices*image_time_pixels]
 # i dati alla fine vengono esclusi in attesa di completare l'ultima immagine # TODO attenzione che si possono perdere scoperte in questo modo
 # poi in futuro inserire interlacciatura a metà o a quarti (sempre potenze di 2) e assicurare la presenza degli ultimi dati
-# TODO tassellazione provvisoria (fatta senza interallacciature)
+# TODO tassellazione provvisoria (fatta senza interallacciature, che invece servono per essere sicuri che segnali veri non cadano a metà tra due immagini)
 downsampled_combined_time_stability = cutted_combined_time_stability.reshape(number_of_time_slices, image_time_pixels).mean(axis=1)
 
 time_index_slices = numpy.array([slice(i*image_time_pixels,(i+1)*image_time_pixels) for i in range(number_of_time_slices)]) # TODO scriverlo meglio
-good_time_index_slices = time_index_slices[downsampled_combined_time_stability > 0.25] # > 25%
+good_time_index_slices = time_index_slices[downsampled_combined_time_stability > 0.25] # > 25% # TODO hardcoded
 # TODO plottare nel grafico precedente questa tassellazione
+print(good_time_index_slices)
 
 
 #nan_tolerance = 0.3 # 30%
