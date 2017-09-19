@@ -32,8 +32,10 @@ signal_time_start = 2*day
 signal_duration = 2*day
 signal_time_stop = signal_time_start + signal_duration
 
-signal_starting_frequency = 32 #10 #90 # Hz
-signal_spindown = -1e-8 # = df/dt # -10^-9 (small) # -10^-8 (medium-big) 
+signal_starting_frequency = 96 #32 #10 #90 # Hz
+# spindown = df/dt
+random_multiplier = 9*numpy.random.rand()+1 # uniform from 1 to 10
+signal_spindown = random_multiplier*-1e-9 # uniform from -10^-9 (small) to -10^-8 (big)
 
 #delta_frequency = -0.005 # Hz
 #delta_frequency/signal_duration# binning_spindown = delta_f/t_durata_segnale
@@ -64,7 +66,7 @@ white_noise = tf.random_normal(shape=t.shape, mean=0, stddev=noise_amplitude).ev
 # TODO BUG: range(start=0, stop, step=2) VS ordered dictionary
 # TODO VEDERE tf.shape di array 1D e di scalari e obblico di mettere sempre le parentesi quadre negli argomenti shape delle funzioni e dimensioni con label/nome tipo xarray e pandas
 
-signal_scale_factor = 0.1#0.005 #0.1
+signal_scale_factor = 0.004 #0.1 #0.005 #0.1
 signal_amplitude = signal_scale_factor*noise_amplitude
 # a 0.005 il segnale è ancora ben visibile
 # a 0.004 limite di accettabile visibilità: non si vede benissimo dove finisce
@@ -82,7 +84,8 @@ def signal_waveform(t):
     # f(t) = f_0 + s*t
     # ==> phi(t) = integrate_0^t{2*pi*(f_0+s*tau) d_tau}
     # ==> phi(t) = 2*pi*(f_0*t + (1/2)*s*t^2 + C) # TODO capire perché è necessario mettere 'modulo 2 pi'
-    signal = signal_amplitude*numpy.sin((2*numpy.pi*(signal_starting_frequency + (1/2)*signal_spindown*t)*t)).astype(numpy.float32)
+    #signal = signal_amplitude*numpy.sin(2*numpy.pi*signal_starting_frequency*t).astype(numpy.float32) # pure sinusoid # TODO CAPIRE perché la versione con la sola sinusoide pura è micidialmente lenta
+    signal = signal_amplitude*numpy.sin((2*numpy.pi*(signal_starting_frequency + (1/2)*signal_spindown*t)*t)).astype(numpy.float32) # sinusoid with spindown
     # TODO usando invece l'esponenziale complesso serve mettere 'modulo 2 pi'
     #signal = signal_amplitude*numpy.sin(2*numpy.pi*(signal_starting_frequency*t))
     return signal
@@ -108,9 +111,9 @@ time_slice = range(signal_start_index-256, signal_start_index+256)
 
 if make_plot is True:
     pyplot.figure(figsize=[15,10])
-    pyplot.title('injected signal and gaussian white noise')
+    pyplot.title('injected signal (displayed 50x) and gaussian white noise\ncritical ratio = {}'.format(signal_scale_factor))
     pyplot.plot(white_noise[time_slice]) # TODO senza logy?
-    pyplot.plot(signal[time_slice])
+    pyplot.plot(50*signal[time_slice])
     pyplot.xticks([0,256,512],[signal_time_start-1,signal_time_start,signal_time_start+1]) # TODO hardcoded
     #pyplot.show()
     pyplot.xlabel('time [s]')
@@ -127,6 +130,9 @@ Nyquist_frequency = time_sampling_rate/2 # 128 Hz
 number_of_time_values_in_one_FFT = FFT_lenght*time_sampling_rate
 unilateral_frequencies = numpy.linspace(0, Nyquist_frequency, int(number_of_time_values_in_one_FFT/2 + 1)) # TODO float32 or float64 ?
 frequency_resolution = 1/FFT_lenght
+
+# TODO per risparmiare memoria, limitare il calcolo alla sola sottobanda interessante (tra 80 e 120 Hz)
+# TODO poi gererare pure immagini RGB
 
 #pyplot.figure(figsize=[15,10])
 #pyplot.hist2d(t, white_noise, bins=[100,number_of_chunks])
@@ -225,6 +231,11 @@ time_data = white_noise+signal
 #pyplot.figure(figsize=[15,10])
 #pyplot.plot(dBV)
 #pyplot.show()
+
+# NOTA:
+# con e senza finestra, spindown 1e-9, segnale 0.1
+# picco 10^4, base 10^0
+# con segnale molto basso (0.004) l'immagine risulta meglio visibile con la finestra (!)
 
 def make_whitened_spectrogram(time_data): # the fast Fourier transform needs power on two to be fast
     windowed_interlaced_chunks = make_chunks(time_data, windowed = True)

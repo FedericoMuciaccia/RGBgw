@@ -236,19 +236,23 @@ pyplot.close()
 combined_time_stability[numpy.isnan(combined_time_stability)] = 0
 
 
-number_of_time_slices = int(numpy.floor(len(combined_time_stability)/image_time_pixels))
-cutted_combined_time_stability = combined_time_stability[0:number_of_time_slices*image_time_pixels]
-# i dati alla fine vengono esclusi in attesa di completare l'ultima immagine # TODO attenzione che si possono perdere scoperte in questo modo
+number_of_time_slices = int(numpy.ceil(len(combined_time_stability)/image_time_pixels))
+ending_gap = number_of_time_slices*image_time_pixels - len(combined_time_stability)
+#cutted_combined_time_stability = combined_time_stability[0:(number_of_time_slices-1)*image_time_pixels]
+extended_combined_time_stability = numpy.pad(array=combined_time_stability, pad_width=[0, ending_gap], mode='constant')
+# i dati alla fine vengono in pratica sempre esclusi in attesa di completare l'ultima immagine (dato che la media risultante è per forza di cose inferiore) # TODO attenzione che si possono perdere scoperte in questo modo
 # poi in futuro inserire interlacciatura a metà o a quarti (sempre potenze di 2) e assicurare la presenza degli ultimi dati
 # TODO tassellazione provvisoria (fatta senza interallacciature, che invece servono per essere sicuri che segnali veri non cadano a metà tra due immagini)
-downsampled_combined_time_stability = cutted_combined_time_stability.reshape(number_of_time_slices, image_time_pixels).mean(axis=1)
+downsampled_combined_time_stability = extended_combined_time_stability.reshape(number_of_time_slices, image_time_pixels).mean(axis=1)
 
 time_index_slices = numpy.array([slice(i*image_time_pixels,(i+1)*image_time_pixels) for i in range(number_of_time_slices)]) # TODO scriverlo meglio
 good_time_index_slices = time_index_slices[downsampled_combined_time_stability > 0.25] # > 25% # TODO hardcoded
 # TODO plottare nel grafico precedente questa tassellazione
+print(number_of_time_slices)
+print(image_time_pixels)
 print(downsampled_combined_time_stability)
 print(good_time_index_slices)
-
+# TODO capire perché i valori calcolati sul laptop differiscono da quelli calcolati sul server
 
 #nan_tolerance = 0.3 # 30%
 #acceptable_percentage = 1 - nan_tolerance
@@ -277,7 +281,7 @@ fig = pyplot.figure(figsize=[7,15])
 numpy.log(dataset.whitened_spectrogram[0:256,best_slice,0]).plot(vmin=-10, vmax=5, cmap='gray', extend='neither', cbar_kwargs=dict(shrink=0.5))
 fig.autofmt_xdate() # rotate the labels of the time ticks
 pyplot.savefig('/storage/users/Muciaccia/media/grayscale_example.jpg', dpi=300)
-# TODO ridurre le dimensioni della barra che indica la scala (sia in cicciosità che in altezza)
+# TODO mettere log10
 
 
 # TODO che succede con le sovrapposizioni? si ripete/duplica parte del dataset?

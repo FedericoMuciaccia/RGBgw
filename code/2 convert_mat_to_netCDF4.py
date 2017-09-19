@@ -596,6 +596,7 @@ def process_folder(path):
 #    complete_dataset = xarray.concat(objs=datasets, dim='GPS_time')
 #    return complete_dataset
 
+# TODO la selezione potrebbe essere meno dura, ma questa globalmente garantisce una buona purezza degli spettri selezionati (penso si potrebbe recuperare massimo un altro 5% di spettri)
 
 # TODO ricontrollare criteri di selezione con la nuova calibrazione
 # TODO anche perché i vari detector possono avere valori basali differenti, che quindi fanno scartare la mediana (penso soprattutto per Hanford)

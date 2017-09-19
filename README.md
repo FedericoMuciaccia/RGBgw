@@ -1,5 +1,5 @@
 # RGBgw
-Search for Gravitational-Wave transients with a Convolutional Neural Network using the data taken by the LIGO and VIRGO interferometers
+Search for Gravitational-Wave transients with a Convolutional Neural Network, simultaneously analysing the data taken by different interferometers.
 
 ## data informations
 * detectors: LIGO Hanford, LIGO Livingston, Virgo
