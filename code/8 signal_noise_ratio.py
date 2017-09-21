@@ -52,6 +52,7 @@ t = numpy.arange(start=image_time_start, stop=image_time_stop, step=time_resolut
 
 #t = tf.linspace(start=image_time_start, stop=image_time_stop, num=image_time_interval*time_sampling_rate + 1) # last value included
 
+# TODO trovare il valore corretto usando a ritroso la distribuzione chi quadro con due gradi di libertà
 noise_amplitude = 1.5e-5 # deve dare 1e-6 # TODO check normalizzazione
 #white_noise = noise_amplitude*numpy.random.randn(t.size).astype(numpy.float32) # gaussian noise around 0
 white_noise = tf.random_normal(shape=t.shape, mean=0, stddev=noise_amplitude).eval() # float32
@@ -85,7 +86,7 @@ def signal_waveform(t):
     # ==> phi(t) = integrate_0^t{2*pi*(f_0+s*tau) d_tau}
     # ==> phi(t) = 2*pi*(f_0*t + (1/2)*s*t^2 + C) # TODO capire perché è necessario mettere 'modulo 2 pi'
     #signal = signal_amplitude*numpy.sin(2*numpy.pi*signal_starting_frequency*t).astype(numpy.float32) # pure sinusoid # TODO CAPIRE perché la versione con la sola sinusoide pura è micidialmente lenta
-    signal = signal_amplitude*numpy.sin((2*numpy.pi*(signal_starting_frequency + (1/2)*signal_spindown*t)*t)).astype(numpy.float32) # sinusoid with spindown
+    signal = signal_amplitude*numpy.sin(2*numpy.pi*(signal_starting_frequency + (1/2)*signal_spindown*t)*t).astype(numpy.float32) # sinusoid with spindown
     # TODO usando invece l'esponenziale complesso serve mettere 'modulo 2 pi'
     #signal = signal_amplitude*numpy.sin(2*numpy.pi*(signal_starting_frequency*t))
     return signal
@@ -150,6 +151,10 @@ def flat_top_cosine_edge_window(window_lenght = number_of_time_values_in_one_FFT
     quarter_lenght = int(window_lenght/4)
     
     index = numpy.arange(window_lenght)
+    
+    ################################
+    # SCRITTO
+    ################################
         
     # sinusoidal part at the edges
     factor = 0.5 - 0.5*numpy.cos(2*numpy.pi*index/half_lenght)
@@ -331,6 +336,8 @@ if make_plot is True:
     pyplot.savefig('/storage/users/Muciaccia/media/histogram_of_whitened_white_noise_with_injected_signal.svg', dpi=300)
     #pyplot.show()
     pyplot.close()
+
+# TODO sovraimporre nel grafico la distribuzione teorica (chi quadro a due gradi di libertà)
 
 # NOTE: FFT (Fast Fourier Transform) refers to a way the discrete Fourier Transform (DFT) can be calculated efficiently, by using symmetries in the calculated terms. The symmetry is highest when `n` is a power of 2, and the transform is therefore most efficient for these sizes.
 
