@@ -58,16 +58,23 @@ L_dataset = xarray.open_mfdataset('/storage/users/Muciaccia/netCDF4/O2/C01/128Hz
 
 # TODO fake Virgo dataset
 #V_dataset = xarray.open_mfdataset('/storage/users/Muciaccia/fake_Virgo_dataset.netCDF4', chunks={'GPS_time': 100}) # TODO qui bisogna invece specificare il chunks_value manualmente
-V_dataset = xarray.open_mfdataset('/storage/users/Muciaccia/netCDF4/O2/C01/128Hz/Virgo*.netCDF4')
+first_V_dataset = xarray.open_mfdataset('/storage/users/Muciaccia/netCDF4/O2/C01/128Hz/Virgo*.netCDF4')
 
 # VSR4 shifted in time and amplitude
-time_lenght = len(V_dataset.time)
-start_time_index = 1100 #650 #0 # TODO metterlo come data che è più elegante
-new_times = H_dataset.time.isel(drop=True, time=slice(start_time_index,start_time_index+time_lenght)) # TODO dataset.isel({'time':slice(...), 'frequency':slice(...)})
+time_lenght = len(first_V_dataset.time)
+start_time_index = 1030 #650 #0 # TODO metterlo come data che è più elegante
+first_new_times = H_dataset.time.isel(drop=True, time=slice(start_time_index,start_time_index+time_lenght)) # TODO dataset.isel({'time':slice(...), 'frequency':slice(...)})
 # TODO artificially shift the VSR4 starting time
-V_dataset.update({'time':new_times}) # V_dataset['time'] = new_times
+first_V_dataset.update({'time':first_new_times}) # V_dataset['time'] = new_times
 # TODO artificially decrease the VSR4 amplitude (better sensitivity)
-V_dataset['spectrogram'] = V_dataset.spectrogram * numpy.exp(-4)
+first_V_dataset['spectrogram'] = first_V_dataset.spectrogram * numpy.exp(-4)
+
+# altra copia per avere più coincidenze # TODO
+second_V_dataset = first_V_dataset.copy()
+start_time_index = 3400
+second_new_times = H_dataset.time.isel(drop=True, time=slice(start_time_index,start_time_index+time_lenght))
+second_V_dataset.update({'time':second_new_times})
+V_dataset = xarray.concat([first_V_dataset, second_V_dataset], dim='time')
 
 dataset = xarray.concat([H_dataset,L_dataset,V_dataset], dim='detector')
 # TODO attenzione che qui viene tutto per sbaglio convertito in float64
@@ -197,8 +204,8 @@ iso_time_ticks = astropy.time.Time(val=iso_time_ticks, format='iso', scale='utc'
 gps_time_ticks = iso_time_ticks.gps
 
 # effettivamente si comincia da 2016-11-30 00:29:35.000
-time_ticks = numpy.arange(6)*month
-month_labels = ['Dec 2016', 'Jan 2017', 'Feb 2017', 'Mar 2017', 'Apr 2017', 'May 2017']
+time_ticks = numpy.arange(9)*month
+month_labels = ['Dec 2016', 'Jan 2017', 'Feb 2017', 'Mar 2017', 'Apr 2017', 'May 2017', 'June 2017', 'July 2017', 'August 2017']
 
 #H_time_stability = five_day_time_stability(H_dataset.locally_science_ready.values.flatten())
 H_time_stability = time_stability(dataset.locally_science_ready.sel(detector='LIGO Hanford').values.flatten())
