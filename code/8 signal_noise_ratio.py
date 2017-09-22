@@ -153,7 +153,7 @@ def flat_top_cosine_edge_window(window_lenght = number_of_time_values_in_one_FFT
     index = numpy.arange(window_lenght)
     
     ################################
-    # SCRITTO
+    # SCRITTO DA FARE
     ################################
         
     # sinusoidal part at the edges
