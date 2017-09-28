@@ -17,18 +17,28 @@
 
 # NOTA: un ragazzo che studiava medicina preso a caso in biblioteca ci ha messo <60 immagini per capire come classificare
 
+import netCDF4 # TODO BUG: anche se inutilizato, va importato per primo
+#import h5py
+
 import xarray
 
-# data loading
-train_images = xarray.open_dataarray('/storage/users/Muciaccia/train_images.netCDF4')
-train_classes = xarray.open_dataarray('/storage/users/Muciaccia/train_classes.netCDF4')
-test_images = xarray.open_dataarray('/storage/users/Muciaccia/test_images.netCDF4')
-test_classes = xarray.open_dataarray('/storage/users/Muciaccia/test_classes.netCDF4')
-
-number_of_train_samples, height, width, channels = train_images.shape
-number_of_train_samples, number_of_classes = train_classes.shape
-
 import tflearn
+
+import sklearn.model_selection
+import sklearn.utils
+
+## data loading
+#train_images = xarray.open_dataarray('/storage/users/Muciaccia/train_images.netCDF4')
+#train_classes = xarray.open_dataarray('/storage/users/Muciaccia/train_classes.netCDF4')
+#test_images = xarray.open_dataarray('/storage/users/Muciaccia/test_images.netCDF4')
+#test_classes = xarray.open_dataarray('/storage/users/Muciaccia/test_classes.netCDF4')
+#
+#number_of_train_samples, height, width, channels = train_images.shape
+#number_of_train_samples, number_of_classes = train_classes.shape
+
+# TODO hardcoded
+height, width, channels = 256, 128, 3
+number_of_classes = 2
 
 # no data preprocessing is required
 # data augmentation # TODO BUG of tflearn (core dumped)
@@ -46,8 +56,8 @@ for i in range(6): # 6 convolutional block is the maximum dept with the given im
     network = tflearn.layers.normalization.local_response_normalization(network) # TODO depth_radius=5, bias=1.0, alpha=0.0001, beta=0.75 interchannel or intrachannel?
     network = tflearn.layers.conv.max_pool_2d(network, kernel_size=2) # strides=None, padding='same'
     #network = tflearn.layers.normalization.local_response_normalization(network)
+    network = tflearn.layers.core.dropout(network, 0.8)
 network = tflearn.layers.core.flatten(network)
-#network = tflearn.layers.core.dropout(network, 0.8)
 #network = tflearn.layers.core.fully_connected(network, n_units=10, activation='relu') # TODO regularizer and weight decay
 network = tflearn.layers.core.fully_connected(network, n_units=number_of_classes, bias=True, activation='softmax', weights_init='truncated_normal', bias_init='zeros', regularizer=None, weight_decay=0)
 #network = tflearn.layers.core.fully_connected(network, n_units=number_of_classes, bias=True, weights_init='truncated_normal', bias_init='zeros', activation='softmax') # weight_decay=0.001, scope=None
@@ -118,32 +128,57 @@ class EarlyStoppingCallback(tflearn.callbacks.Callback):
         #accuracy_ratio = training_state.acc_value / training_state.val_acc
         #print(loss_ratio, accuracy_ratio)
 
-signal_amplitudes = [None, 10, 5, 1, None]
-previous_signal_amplitude = 5
-current_signal_amplitude = 1
+# signal amplitude: 32, 16, 8, 4, 2, 1
+# epoche: 20+5+5+5+10+
+# learning rate: 0.001, 0.0001 # andare a passi di fattore 2
+# TODO serve trovare un modo per aggirare il plateau iniziale (magari con un'inizializzazione furba)
+# TODO mettere leggeri dropout, per avvicinare train e test
+# TODO valutare se partire direttamente da 16
+# TODO fare checkpoints e prendere quello con validation accuracy più alta (per fare early stopping)
+signal_amplitudes = [32, 16, 8, 4, 2, 1] # descending order
+biggest_amplitude = max(signal_amplitudes)
+smallest_amplitude = min(signal_amplitudes)
 
-# load pretrained weights (to start closer to the minimum)
-model.load('/storage/users/Muciaccia/models/pretraining_amplitude_{}.tflearn'.format(previous_signal_amplitude))
+validation = True
 
-# TODO mettere un if sull'attributo signal_intensity (ereditato dai dataset) per implementare il curriculum learning
-
-# training
 # TODO poi rimettere 30+10+10 epoche
-def train(number_of_epochs = 10):
-    try:
-        model.fit({'input':train_images}, {'target':train_classes}, n_epoch=number_of_epochs, validation_set=({'input':test_images}, {'target':test_classes}), snapshot_step=100, show_metric=True, callbacks=EarlyStoppingCallback()) # run_id='tflearn_conv_net_trial'
-    except StopIteration:
-        print('training finished!')
+number_of_epochs = 50
+# TODO fare un altro shuffle preliminare per garanzia sul validation set
 
-    # save the model
-    model.save('/storage/users/Muciaccia/models/pretraining_amplitude_{}.tflearn'.format(current_signal_amplitude))
-    # TODO save (append) the training history
+if not validation:
+    # load first weights
+    model.load('/storage/users/Muciaccia/models/pretraining_amplitude_{}.tflearn'.format(16))
+    # curriculum learning
+    for amplitude in signal_amplitudes:
+        print('signal amplitude:', amplitude)
+#        if amplitude is not biggest_amplitude:
+#            # load pretrained weights (to start closer to the minimum)
+#            model.load('/storage/users/Muciaccia/models/pretraining_amplitude_{}.tflearn'.format(amplitude))
+        
+        # TODO mettere un if sull'attributo signal_intensity (ereditato dai dataset) per implementare il curriculum learning
+        
+        # load data
+        dataset = xarray.open_dataset('/storage/users/Muciaccia/data/train/signal_amplitude_{}.netCDF4'.format(amplitude))
+        train_images, test_images, train_classes, test_classes = sklearn.model_selection.train_test_split(dataset.images, dataset.classes, test_size=0.5, shuffle=True)
+        
+        # training
+        try:
+            model.fit({'input':train_images}, {'target':train_classes}, n_epoch=number_of_epochs, validation_set=({'input':test_images}, {'target':test_classes}), snapshot_step=100, show_metric=True, callbacks=EarlyStoppingCallback()) # run_id='tflearn_conv_net_trial'
+        except StopIteration:
+            print('training finished!')
 
-if current_signal_amplitude is not None: # TODO fare anche caso iniziale
-    train()
+        # save the model
+        model.save('/storage/users/Muciaccia/models/pretraining_amplitude_{}.tflearn'.format(amplitude))
+        # TODO save (append) the training history
+    exit()
 
-else:
-    pass # TODO validate() # TODO non validare se ancora deve essere finito il curriculum learning? oppure far vedere l'incremento
+if validation:
+    # load latest weights
+    model.load('/storage/users/Muciaccia/models/pretraining_amplitude_{}.tflearn'.format(smallest_amplitude))
+
+
+
+
 
 # tempo pretraining con segnale a 10: 4 minuti, <30 epoche con 2500 immagini di train
 # tempo pretraining con segnale a 5: 1 minuto, <10 epoche
@@ -225,14 +260,14 @@ def compute_metrics(dataset):
     # serve fare validation più fitta, coi mezzi punti
     purity = true_positives/(true_positives + false_positives) # precision
     efficiency = true_positives/(true_positives + false_negatives) # recall
+    accuracy = (true_positives + true_negatives)/(true_positives + false_positives + true_negatives + false_negatives)
     # TODO fare qui istogramma della separazione tra le due classi
     # con predicted_signal_probabilities e true_classes
-    # TODO mettere anche accuracy
-    return [dataset.signal_intensity, true_negatives, false_positives, false_negatives, true_positives, purity, efficiency]
+    return [dataset.signal_intensity, true_negatives, false_positives, false_negatives, true_positives, purity, efficiency, accuracy]
 
 import glob
 
-validation_paths = glob.glob('/storage/users/Muciaccia/validation/**/*.netCDF4', recursive=True) # TODO 10 risulta venire dopo 1 e non dopo 9
+validation_paths = glob.glob('/storage/users/Muciaccia/data/validation/**/*.netCDF4', recursive=True) # TODO 10 risulta venire dopo 1 e non dopo 9
 
 metrics = []
 for path in validation_paths:
@@ -248,7 +283,7 @@ for path in validation_paths:
 
 import pandas
 
-metrics = pandas.DataFrame(metrics, columns=['signal_intensity', 'true_negatives', 'false_positives', 'false_negatives', 'true_positives', 'purity', 'efficiency'])
+metrics = pandas.DataFrame(metrics, columns=['signal_intensity', 'true_negatives', 'false_positives', 'false_negatives', 'true_positives', 'purity', 'efficiency', 'accuracy'])
 metrics.sort_values(by='signal_intensity', inplace=True)
 
 print(metrics)
