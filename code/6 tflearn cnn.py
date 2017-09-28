@@ -269,7 +269,8 @@ def compute_metrics(dataset):
     all_validation_samples = true_positives + false_positives + true_negatives + false_negatives
     # TODO fare qui istogramma della separazione tra le due classi
     # con predicted_signal_probabilities e true_classes
-    return [dataset.signal_intensity, all_validation_samples, 100*true_negatives/all_real_noises, 100*false_positives/all_real_noises, 100*false_negatives/all_real_signals, 100*true_positives/all_real_signals, purity, efficiency, accuracy]
+    return [dataset.signal_intensity, all_validation_samples, 100*true_negatives/all_real_noises, 100*false_positives/all_real_noises, 100*false_negatives/all_real_signals, 100*true_positives/all_real_signals, 100*purity, 100*efficiency, 100*accuracy]
+    # TODO mettere solo due cifre decimali
 
 import glob
 
@@ -290,7 +291,7 @@ for path in validation_paths:
 import pandas
 
 # TODO 'false alarms' è brutto e poco chiaro. mettere qualcosa tipo 'misclassified noise'
-metrics = pandas.DataFrame(metrics, columns=['signal_intensity', 'all_validation_samples', 'rejected noise', 'false allarms', 'missed signals', 'selected signals', 'purity', 'efficiency', 'accuracy'])
+metrics = pandas.DataFrame(metrics, columns=['signal_intensity', 'all_validation_samples', 'rejected noise (%)', 'false alarms (%)', 'missed signals (%)', 'selected signals (%)', 'purity (%)', 'efficiency (%)', 'accuracy (%)'])
 metrics.sort_values(by='signal_intensity', inplace=True)
 
 print(metrics)
