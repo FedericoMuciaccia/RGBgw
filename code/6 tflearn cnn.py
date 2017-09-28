@@ -254,16 +254,22 @@ def compute_metrics(dataset):
     predicted_classes = numpy.round(predicted_signal_probabilities) # TODO vedere dall'istogramma dove deve essere messa la soglia ottimale
     true_classes = dataset.classes[:,1]
     confusion_matrix = sklearn.metrics.confusion_matrix(true_classes, predicted_classes)
-    [[true_negatives,false_positives],[false_negatives,true_positives]] = [[p0t0,p1t0],[p0t1,p1t1]] = confusion_matrix
+    [[true_negatives,false_positives],[false_negatives,true_positives]] = [[predicted_0_true_0,predicted_1_true_0],[predicted_0_true_1,predicted_1_true_1]] = confusion_matrix
     # NOTA: fino a segnale 2 i falsi negativi sono pochissimi ed invece i falsi positivi sono parecchi
     # serve fare un trainig a 2
     # serve fare validation più fitta, coi mezzi punti
     purity = true_positives/(true_positives + false_positives) # precision
     efficiency = true_positives/(true_positives + false_negatives) # recall
     accuracy = (true_positives + true_negatives)/(true_positives + false_positives + true_negatives + false_negatives)
+    # normalizations
+    all_real_signals = true_positives + false_negatives
+    all_real_noises = true_negatives + false_positives
+    all_predicted_as_signals = true_positives + false_positives
+    all_predicted_as_noise = true_negatives + false_negatives
+    all_validation_samples = true_positives + false_positives + true_negatives + false_negatives
     # TODO fare qui istogramma della separazione tra le due classi
     # con predicted_signal_probabilities e true_classes
-    return [dataset.signal_intensity, true_negatives, false_positives, false_negatives, true_positives, purity, efficiency, accuracy]
+    return [dataset.signal_intensity, all_validation_samples, 100*true_negatives/all_real_noises, 100*false_positives/all_real_noises, 100*false_negatives/all_real_signals, 100*true_positives/all_real_signals, purity, efficiency, accuracy]
 
 import glob
 
@@ -283,7 +289,8 @@ for path in validation_paths:
 
 import pandas
 
-metrics = pandas.DataFrame(metrics, columns=['signal_intensity', 'true_negatives', 'false_positives', 'false_negatives', 'true_positives', 'purity', 'efficiency', 'accuracy'])
+# TODO 'false alarms' è brutto e poco chiaro. mettere qualcosa tipo 'misclassified noise'
+metrics = pandas.DataFrame(metrics, columns=['signal_intensity', 'all_validation_samples', 'rejected noise', 'false allarms', 'missed signals', 'selected signals', 'purity', 'efficiency', 'accuracy'])
 metrics.sort_values(by='signal_intensity', inplace=True)
 
 print(metrics)
@@ -316,6 +323,15 @@ print(metrics)
 #            1254  0.933036    1.000000  
 
 
+#   signal_intensity  true_negatives  false_positives  false_negatives  \
+#                 1            5077               20             1048   
+#                 2            5116               19                9   
+#                 4            5151               12                0   
+#
+#   true_positives    purity  efficiency  accuracy  
+#            4095  0.995140    0.796228  0.895703  
+#            5096  0.996285    0.998237  0.997266  
+#            5077  0.997642    1.000000  0.998828  
 
 
 
