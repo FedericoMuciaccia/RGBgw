@@ -291,6 +291,7 @@ pyplot.savefig('/storage/users/Muciaccia/media/grayscale_example.jpg', dpi=300)
 # TODO mettere log10
 
 
+
 # TODO che succede con le sovrapposizioni? si ripete/duplica parte del dataset?
 #good_dataset = dataset.isel(time = good_slices[0]) # TODO poi parallelizzare a mano su tutte le slice (così si riesce forse a fare tutto il calcolo in ram)
 #good_dataset = dataset.isel(time = numpy.r_[tuple(good_slices)]) # TODO cercare un modo più elegante e comprensibile
