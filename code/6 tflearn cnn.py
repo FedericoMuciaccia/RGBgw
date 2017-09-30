@@ -284,12 +284,57 @@ def predict_in_chunks(images):
 def compute_metrics(dataset):
     predictions = predict_in_chunks(dataset.images)
     predicted_signal_probabilities = predictions[:,1]
-    predicted_classes = numpy.round(predicted_signal_probabilities) # TODO vedere dall'istogramma dove deve essere messa la soglia ottimale
     true_classes = dataset.classes[:,1]
+    
+    
+    # plot an histogram of the classifier's predictions
+    # to gain a feeling of:
+    # - thresholding error
+    # - prediction confidence
+    # - class separability
+    fig_predictions = pyplot.figure()
+    ax1 = fig_predictions.add_subplot(111)
+    
+    # predicted as noise
+    n, bins, rectangles = ax1.hist(predicted_signal_probabilities[true_classes == 0], 
+    	                           bins=50,
+    	                           range=(0,1),
+    	                           normed=True, 
+    	                           histtype='step', 
+    	                           #alpha=0.6,
+    	                           color='#ff3300',
+    	                           label='noise')
+    # predicted as signal+noise
+    n, bins, rectangles = ax1.hist(predicted_signal_probabilities[true_classes == 1], 
+    	                           bins=50,
+    	                           range=(0,1),
+    	                           normed=True, 
+    	                           histtype='step', 
+    	                           #alpha=0.6,
+    	                           color='#0099ff',
+    	                           label='noise + signal')
+    ax1.set_title('classifier output') # OR 'model output'
+    ax1.set_ylabel('density')
+    ax1.set_xlabel('predicted signal probability') # OR 'class prediction'
+    tick_spacing = 0.1
+    #ax1.set_yscale('log')
+    ax1.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(tick_spacing))
+    #ax1.legend(loc='best')
+    #pyplot.axvline(x=best_threshold, # TODO
+    #	           color='grey', 
+    #	           linestyle='dotted', 
+    #	           alpha=0.8)
+    ax1.legend(loc='upper left', frameon=False)
+    fig_predictions.savefig('/storage/users/Muciaccia/media/class_predictions/amplitude_{}.svg'.format(dataset.signal_intensity))
+    pyplot.close()
+    
+    
+    threshold = 0.5 # TODO NOOOOOO: l'appartenenza a priori ad una classe NON dipende dalla soglia
+    predicted_classes = numpy.greater(predicted_signal_probabilities, threshold) # TODO vedere dall'istogramma dove deve essere messa la soglia ottimale
+
     confusion_matrix = sklearn.metrics.confusion_matrix(true_classes, predicted_classes)
     [[true_negatives,false_positives],[false_negatives,true_positives]] = [[predicted_0_true_0,predicted_1_true_0],[predicted_0_true_1,predicted_1_true_1]] = confusion_matrix
     # NOTA: fino a segnale 2 i falsi negativi sono pochissimi ed invece i falsi positivi sono parecchi
-    # serve fare un trainig a 2
     # serve fare validation più fitta, coi mezzi punti
     purity = true_positives/(true_positives + false_positives) # precision
     efficiency = true_positives/(true_positives + false_negatives) # recall
