@@ -56,17 +56,17 @@ for i in range(6): # 6 convolutional block is the maximum dept with the given im
                                           strides=1,
                                           padding='valid',
                                           activation='linear',
-                                          bias=True,
+                                          bias=True, # TODO controllare per batch normalization
                                           weights_init='uniform_scaling',
                                           bias_init='zeros',
                                           regularizer=None,
                                           weight_decay=0) # regularizer='L2', weight_decay=0.001, scope=None
-    network = tflearn.layers.normalization.batch_normalization(network,
-                                                               beta=0.0,
-                                                               gamma=1.0,
-                                                               decay=0, # default: decay=0.9
-                                                               stddev=0.002, # standard deviation for weights initialization
-                                                               trainable=True)
+#    network = tflearn.layers.normalization.batch_normalization(network,
+#                                                               beta=0.0,
+#                                                               gamma=1.0, # TODO il layer dopo è un ReLU
+#                                                               decay=0.9, # TODO default: decay=0.9
+#                                                               stddev=0.002, # standard deviation for weights initialization
+#                                                               trainable=True)
     network = tflearn.activation(network, activation='relu')
     #network = tflearn.layers.normalization.local_response_normalization(network) # TODO depth_radius=5, bias=1.0, alpha=0.0001, beta=0.75 interchannel or intrachannel?
     network = tflearn.layers.conv.max_pool_2d(network, kernel_size=2) # strides=None, padding='same'
@@ -172,7 +172,7 @@ signal_amplitudes = [32, 16, 8, 4, 2, 1] # descending order
 biggest_amplitude = max(signal_amplitudes)
 smallest_amplitude = min(signal_amplitudes)
 
-validation = False
+validation = True
 
 # TODO poi rimettere 30+10+10 epoche
 number_of_epochs = 50
@@ -180,7 +180,7 @@ number_of_epochs = 50
 
 if not validation:
     # load first weights
-    model.load('/storage/users/Muciaccia/models/pretraining_amplitude_{}.tflearn'.format(16))
+    #model.load('/storage/users/Muciaccia/models/pretraining_amplitude_{}.tflearn'.format(32))
     # curriculum learning
     for amplitude in signal_amplitudes:
         print('signal amplitude:', amplitude)
