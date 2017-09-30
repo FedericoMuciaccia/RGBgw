@@ -34,12 +34,12 @@ dataset = xarray.open_mfdataset('/storage/users/Muciaccia/netCDF4/O2/C01/128Hz/L
 # whole O2 run view
 time_slice = slice('2016-11-30','2017-08-25')
 frequency_slice = slice(108.845,108.870)
-pulsar3_in_6_months = dataset.whitened_spectrogram.sel(frequency=frequency_slice, time=time_slice, detector='LIGO Hanford')
+pulsar3_whole_run = dataset.whitened_spectrogram.sel(frequency=frequency_slice, time=time_slice, detector='LIGO Hanford')
 
 fig = pyplot.figure(figsize=[20,10])
-numpy.log(pulsar3_in_6_months).plot(vmin=-10, vmax=5, cmap='gray', extend='neither', cbar_kwargs=dict(shrink=0.5))
+numpy.log(pulsar3_whole_run).plot(vmin=-10, vmax=5, cmap='gray', extend='neither', cbar_kwargs=dict(shrink=0.5))
 fig.autofmt_xdate() # rotate the labels of the time ticks
-pyplot.savefig('/storage/users/Muciaccia/media/pulsar3_hardware_injection_(whole_run).jpg', dpi=300)
+pyplot.savefig('/storage/users/Muciaccia/media/pulsar3_hardware_injection_whole_run.jpg', dpi=300)
 pyplot.close()
 
 # 5 days view
@@ -47,12 +47,12 @@ pyplot.close()
 time_slice = slice('2017-02-09','2017-02-14') # H
 #frequency_slice = slice(108.835,108.865)
 frequency_slice = slice(108.840,108.870)
-pulsar3_in_5_days = dataset.whitened_spectrogram.sel(frequency=frequency_slice, time=time_slice, detector='LIGO Hanford')
+pulsar3_in_6_days = dataset.whitened_spectrogram.sel(frequency=frequency_slice, time=time_slice, detector='LIGO Hanford')
 
 fig = pyplot.figure(figsize=[10,20])
-numpy.log(pulsar3_in_5_days).plot(vmin=-10, vmax=5, cmap='gray', extend='neither', cbar_kwargs=dict(shrink=0.5))
+numpy.log(pulsar3_in_6_days).plot(vmin=-10, vmax=5, cmap='gray', extend='neither', cbar_kwargs=dict(shrink=0.5))
 fig.autofmt_xdate() # rotate the labels of the time ticks
-pyplot.savefig('/storage/users/Muciaccia/media/pulsar3_hardware_injection_(5_days).jpg', dpi=300)
+pyplot.savefig('/storage/users/Muciaccia/media/pulsar3_hardware_injection_6_days.jpg', dpi=300)
 pyplot.close()
 
 
@@ -67,7 +67,7 @@ resonance_line = dataset.whitened_spectrogram.sel(frequency=frequency_slice, tim
 fig = pyplot.figure(figsize=[10,20])
 numpy.log(resonance_line).plot(vmin=-10, vmax=5, cmap='gray', extend='neither', cbar_kwargs=dict(shrink=0.5))
 fig.autofmt_xdate() # rotate the labels of the time ticks
-pyplot.savefig('/storage/users/Muciaccia/media/resonance_line_at_100Hz_(5_days_view).jpg', dpi=300)
+pyplot.savefig('/storage/users/Muciaccia/media/resonance_line_at_100Hz_6_days.jpg', dpi=300)
 pyplot.close()
 
 
@@ -91,7 +91,7 @@ pyplot.close()
 # si preferirebbe avere ottima efficienza anche a discapito della purezza, perché gestire molti falsi positivi è solo un problema di risorse di calcolo nel follow-up per uccidere tutti i non-segnali
 # in pratica la mia analisi non Doppler-corretta deve competere con la loro Doppler-corretta
 # righe con doppie corna e correzione Doppler sia di relatività speciale che generale?
-# ci vorrebbe una finestra fft ottimizzata per il doppler giornaliero
+# ci vorrebbe una finestra fft ottimizzata per il doppler giornaliero (e le veloci variazioni che questo comporta)
 # rendere più pulito ed omogeneo lo spettrogramma deve essere la priorità per poi poter fare un buon riconscimento visuale
 
 

@@ -50,12 +50,26 @@ number_of_classes = 2
 network = tflearn.layers.core.input_data(shape=[None, height, width, channels], name='input') # TODO data_augmentation=image_augmentation
 #network = tflearn.layers.core.dropout(network, 0.8)
 for i in range(6): # 6 convolutional block is the maximum dept with the given image size
-    network = tflearn.layers.conv.conv_2d(network, nb_filter=9, filter_size=3, strides=1, padding='valid', activation='linear', bias=True, weights_init='uniform_scaling', bias_init='zeros', regularizer=None, weight_decay=0) # regularizer='L2', weight_decay=0.001, scope=None
-    # TODO batch_normalization
+    network = tflearn.layers.conv.conv_2d(network,
+                                          nb_filter=9,
+                                          filter_size=3,
+                                          strides=1,
+                                          padding='valid',
+                                          activation='linear',
+                                          bias=True,
+                                          weights_init='uniform_scaling',
+                                          bias_init='zeros',
+                                          regularizer=None,
+                                          weight_decay=0) # regularizer='L2', weight_decay=0.001, scope=None
+    network = tflearn.layers.normalization.batch_normalization(network,
+                                                               beta=0.0,
+                                                               gamma=1.0,
+                                                               decay=0, # default: decay=0.9
+                                                               stddev=0.002, # standard deviation for weights initialization
+                                                               trainable=True)
     network = tflearn.activation(network, activation='relu')
-    network = tflearn.layers.normalization.local_response_normalization(network) # TODO depth_radius=5, bias=1.0, alpha=0.0001, beta=0.75 interchannel or intrachannel?
+    #network = tflearn.layers.normalization.local_response_normalization(network) # TODO depth_radius=5, bias=1.0, alpha=0.0001, beta=0.75 interchannel or intrachannel?
     network = tflearn.layers.conv.max_pool_2d(network, kernel_size=2) # strides=None, padding='same'
-    #network = tflearn.layers.normalization.local_response_normalization(network)
     network = tflearn.layers.core.dropout(network, 0.8)
 network = tflearn.layers.core.flatten(network)
 #network = tflearn.layers.core.fully_connected(network, n_units=10, activation='relu') # TODO regularizer and weight decay
@@ -64,6 +78,25 @@ network = tflearn.layers.core.fully_connected(network, n_units=number_of_classes
 network = tflearn.layers.estimator.regression(network, optimizer='adam', learning_rate=0.001, batch_size=128, loss='categorical_crossentropy', shuffle_batches=True, name='target') # metric='default', to_one_hot=False, n_classes=None, validation_monitors=None
 
 model = tflearn.DNN(network, tensorboard_verbose=0) # 3
+
+# Keras BatchNormalization
+## momentum for the moving average
+#momentum=0.99
+## if True, add offset of beta to normalized tenso
+#center=True
+## if True, multiply by gamma. If False, gamma is not used. When the next layer is linear (also e.g. nn.relu), this can be disabled since the scaling will be done by the next layer # TODO
+#scale=True
+## initializers for the weights
+#beta_initializer='zeros'
+#gamma_initializer='ones'
+#moving_mean_initializer='zeros'
+#moving_variance_initializer='ones'
+## optional regularizers for the weights
+#beta_regularizer=None
+#gamma_regularizer=None
+## optional constraints for the weights
+#beta_constraint=None
+#gamma_constraint=None
 
 # TODO provare batch_size 64, controllare feed_dict nell'altra rete, controllare summary della rete, fare la prova in bianconero, controllare i valori strani di validation loss and accuracy
 
@@ -139,7 +172,7 @@ signal_amplitudes = [32, 16, 8, 4, 2, 1] # descending order
 biggest_amplitude = max(signal_amplitudes)
 smallest_amplitude = min(signal_amplitudes)
 
-validation = True
+validation = False
 
 # TODO poi rimettere 30+10+10 epoche
 number_of_epochs = 50
