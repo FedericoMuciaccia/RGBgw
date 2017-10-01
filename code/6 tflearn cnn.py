@@ -329,7 +329,7 @@ def compute_metrics(dataset):
     pyplot.close()
     
     
-    threshold = 0.5 # TODO NOOOOOO: l'appartenenza a priori ad una classe NON dipende dalla soglia
+    threshold = 0.15 # 0.5 # TODO NOOOOOO: l'appartenenza a priori ad una classe NON dipende dalla soglia
     predicted_classes = numpy.greater(predicted_signal_probabilities, threshold) # TODO vedere dall'istogramma dove deve essere messa la soglia ottimale
 
     confusion_matrix = sklearn.metrics.confusion_matrix(true_classes, predicted_classes)

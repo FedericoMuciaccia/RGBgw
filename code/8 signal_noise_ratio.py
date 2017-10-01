@@ -152,6 +152,8 @@ def flat_top_cosine_edge_window(window_lenght = number_of_time_values_in_one_FFT
     
     index = numpy.arange(window_lenght)
     
+    # TODO valutare la Hamming window e/o quella cos^2 (in modo che interallacciata sommi sempre a 1)
+    
     ################################
     # SCRITTO
     ################################

@@ -79,6 +79,7 @@ V_dataset = xarray.concat([first_V_dataset, second_V_dataset], dim='time')
 dataset = xarray.concat([H_dataset,L_dataset,V_dataset], dim='detector')
 # TODO attenzione che qui viene tutto per sbaglio convertito in float64
 
+# TODO prove per isolare il discorso della conversione sbagliata in float64
 a = xarray.DataArray(data=numpy.random.rand(5,5).astype('float32'), dims=['x','y'])
 b = xarray.DataArray(data=numpy.round(numpy.random.rand(5)).astype(bool), dims=['x'])
 c = xarray.Dataset(data_vars=dict(my_float32_matrix=a, my_bool_array=b))
@@ -111,7 +112,7 @@ raw.semilogy(dataset.frequency, dataset.spectrogram[:,100,0])
 raw.set_ylabel('strain') # TODO CHECK # TODO mettere unità di misura
 raw.set_xlabel('frequency [Hz]')
 whitened.semilogy(dataset.frequency, dataset.whitened_spectrogram[:,100,0])
-whitened.set_ylabel('whitened strain') # TODO CHECK
+whitened.set_ylabel('whitened strain') # TODO CHECK # TODO mettere nome 'ratio'
 whitened.set_xlabel('frequency [Hz]')
 raw.set_title('comparison between raw and whitened spectra \n', size=16) # TODO 3 hack
 pyplot.savefig('/storage/users/Muciaccia/media/whitening.jpg')
@@ -122,11 +123,11 @@ pyplot.close()
 # TODO mettere i due istogrammi verticalmente a lato dei due spettri (come fannpo gli astrofisici per il grafico dei residui)
 # TODO non serve a molto, dato che poi verrà fatto un plot simile coi tre colori/canali/detector. serve solo a far vedere che la distribuzione non viene molto modificata
 
-# TODO
+# TODO vedere se scriverlo su file
 numpy.log(dataset.spectrogram[0:256,0:128,0]).plot.hist(bins=100, range=[-20, 0])
 pyplot.show()
 
-# TODO
+# TODO vedere se scriverlo su file
 numpy.log(dataset.whitened_spectrogram[0:256,0:128,0]).plot.hist(bins=100, range=[-10, 10])
 pyplot.show()
 
@@ -170,7 +171,7 @@ def time_pixels(time_interval):
 
 def time_stability(data, time_interval = default_time_scale):
     #time_interval = 128
-    number_of_time_ticks = time_pixels(time_interval)
+    number_of_time_ticks = time_pixels(time_interval) # TODO vedere se è corretto il fattore 2
     kernel = numpy.ones(number_of_time_ticks)
     target = data
     # TODO questa convoluzione è una sorta di running average (?)

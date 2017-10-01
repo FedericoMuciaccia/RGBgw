@@ -214,6 +214,7 @@ def process_file(file_path):
     
     has_not_many_temporal_holes = percentage_of_zeros < 0.2 # less than 20% zeros in the time domain
     # TODO vedere quanto percentage_of_zeros sia necessario a posteriori degli altri filtri sul rumore
+    # TODO vedere se da qualche parte nei loro file è sritta la posizione in cui sono stati messi i vari zero
     
     # TODO farne un istogramma per stabilire una soglia che sia data-driven
     
