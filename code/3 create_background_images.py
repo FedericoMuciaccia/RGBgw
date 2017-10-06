@@ -179,6 +179,8 @@ def time_stability(data, time_interval = default_time_scale):
     return stability_indicator.astype(numpy.float32) # to better handle the NaN values
 # TODO apply_along_dimension with xarray
 
+# TODO al posto dei buchi neri mettere del rumore bianco per aumentare la leggibilità dell'imagine finale e dunque la pulita riconoscibilità della linea multicolore (che sarà l'unico oggetto che cambierà radicalmente colore in tutta l'immagine)
+
 #kernel = numpy.ones(time_ticks_required)
 #target = H_dataset.locally_science_ready.values.flatten()
 #goodness_indicator = numpy.convolve(kernel, target, mode='same')/time_ticks_required

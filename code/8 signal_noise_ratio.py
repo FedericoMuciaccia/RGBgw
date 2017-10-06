@@ -153,11 +153,7 @@ def flat_top_cosine_edge_window(window_lenght = number_of_time_values_in_one_FFT
     index = numpy.arange(window_lenght)
     
     # TODO valutare la Hamming window e/o quella cos^2 (in modo che interallacciata sommi sempre a 1)
-    
-    ################################
-    # SCRITTO
-    ################################
-        
+            
     # sinusoidal part at the edges
     factor = 0.5 - 0.5*numpy.cos(2*numpy.pi*index/half_lenght)
     # flat part in the middle
@@ -260,6 +256,8 @@ def make_whitened_spectrogram(time_data): # the fast Fourier transform needs pow
     # TODO fare plot zoomato attorno alla riga, in modo da vedere i ghost laterali prima e dopo lo sbiancamento
     return whitened_spectrogram # TODO valutare se inserire un dato fittizio per arrivare ad una potenza di 2
 
+#####################################
+
 # TODO BUG: tensorflow non ha una versione di rfft che giri su CPU, quindi il codice non è portabile su tutti i dispositivi
 # TODO VEDERE tf.batch_fft2d
 # TODO VEDERE tf.contrib.signal ha delle routine per calcolare gli spettrogrammi
@@ -311,7 +309,7 @@ if make_plot is True:
 # normd circa 10^-5 o 10^-6
 # dati reali con livello a 10^-23
 # simulare rumore bianco in frequenza direttamente con una gaussiana di larghezza 1/sigma # TODO corretto? grafici lin VS logy? si intendono le due gaussiane reale e immaginaria dell'esito della FFT?
-# finestra flat_coseno per minimizzare l'allargamento di segnali che variano un poco in frequenza (per smussare i bordi). e dunque c'è poi la necessità di buttare i bordi mediante le FFt interallacciate. (minimizzare i ghost laterali della delta di Dirac allargata della sinusoide e/o massimizzare l'altezza del picco). poi usare normw per tenere in conto della potenza persa ai bordi della finestra rispetto alla funzione gradino (fattore comuque vicino ad 1). tutti fattori da rimoltiplicare per controbilanciare la perdita di potenza spettrale
+# finestra flat_coseno per minimizzare l'allargamento di segnali che variano un poco in frequenza (per smussare i bordi). e dunque c'è poi la necessità di buttare i bordi mediante le FFT interallacciate (per ripassare poi nel dominio del tempo). (minimizzare i ghost laterali della delta di Dirac allargata della sinusoide e/o massimizzare l'altezza del picco). poi usare normw per tenere in conto della potenza persa ai bordi della finestra rispetto alla funzione gradino (fattore comuque vicino ad 1). tutti fattori da rimoltiplicare per controbilanciare la perdita di potenza spettrale
 
 #pyplot.figure(figsize=[15,10])
 #pyplot.hist(numpy.log10(spectrogram[image_range].flatten()), bins=300) # log10
@@ -370,7 +368,7 @@ def peakmap(image):
     # TODO controllare i bordi
     maxima = numpy.array([numpy.convolve(numpy.sign(numpy.diff(copied_image, axis=0))[:,i], [-1,1]) for i in range(image.shape[1])]).T == 2
     # TODO sarebbe forse più corretto prendere i massimi locali lungo la direzione dello spindown, invece che in quella orizzontale della finestra
-    under_threshold = copied_image < 2.5
+    under_threshold = copied_image < 2.5 # TODO provare poi a mettere la soglia a 2 per fare il confronto con la Hough per i segnali normalmente sottosoglia
     maxima[under_threshold] = 0
     return maxima.astype(int)
 
