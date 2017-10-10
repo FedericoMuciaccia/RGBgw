@@ -135,8 +135,6 @@ pyplot.close()
 
 # TODO controllare dappertutto i logaritmi in base e o in base 10
 
-# TODO libro neuroscienze: Kandel
-
 # inietto direttamente un pattern nel dominio delle frequenze
 # una sinusoide troncata con un certo spindown appare nello spettrogramma semplicemente come un segmento inclinato verso il basso
 
