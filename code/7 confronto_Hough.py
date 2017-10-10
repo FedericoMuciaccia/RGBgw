@@ -29,13 +29,15 @@ def to_dense_peakmap(grayscale_image):
     # to search for local maxima (along frequency dimension), we search for derivatives with alternating sign
     signs_of_vertical_differences = numpy.sign(numpy.diff(grayscale_image, axis=0))
     
+    # TODO sostituire la convoluzione con un secondo diff fatto sui segni, in modo che la somma di +1 e -1 faccia zero (controllare che la peakmap in output sia identica)
     kernel = [[-1],[1]]
     convolutions = scipy.signal.convolve2d(signs_of_vertical_differences, kernel, mode='valid')
     #convolutions = numpy.array([numpy.convolve(signs_of_vertical_differences[:,i], kernel, mode='valid') for i in range(grayscale_image.shape[1])])
     # TODO parallelizare
     # TODO attenzione ai bordi
     
-    under_threshold = grayscale_image < 2.5
+    threshold = 2.5 # they keep only >= 2.5
+    under_threshold = grayscale_image < threshold
     
     maxima = numpy.equal(convolutions, 2)
     # TODO sarebbe forse più corretto prendere i massimi locali lungo la direzione dello spindown, invece che in quella orizzontale della finestra
@@ -47,7 +49,7 @@ def to_dense_peakmap(grayscale_image):
 #    frequencies, times = numpy.nonzero(dense_peakmap)
 #    return dict(time=times, frequency=frequencies)
 
-def create_blind_sparse_peakmap(file_path): # "blind" because the 'class' data are not saved
+def create_sparse_peakmap(file_path):
     dataset = xarray.open_dataset(file_path)
     
     whitened_spectrogram = to_whitened(dataset.images) # without log: values in R^+
@@ -60,16 +62,17 @@ def create_blind_sparse_peakmap(file_path): # "blind" because the 'class' data a
     file_name = 'amplitude_{}.mat'.format(dataset.signal_intensity)
     # TODO capire perché i bool vengono salvati come uint8
     # TODO salvare in formato compresso (h5?)
-    scipy.io.savemat('/storage/users/Muciaccia/data/validation/dense_peakmaps/'+file_name,
+    scipy.io.savemat('/storage/users/Muciaccia/data/validation/dense_peakmaps/'+file_name, # TODO salvare in h5
                      mdict={'H':[to_dense_peakmap(image) for image in H], # TODO vettorializzare per bene con le convoluzioni di TensorFlow
                             'L':[to_dense_peakmap(image) for image in L],
                             'V':[to_dense_peakmap(image) for image in V],
+                            'classes':dataset.classes[:,1].astype(numpy.uint8),
                             'signal_amplitude':dataset.signal_intensity})
 
 file_list = glob.glob('/storage/users/Muciaccia/data/validation/*.netCDF4', recursive=True)
 
 for file_path in file_list:
-    create_blind_sparse_peakmap(file_path)
+    create_sparse_peakmap(file_path)
 
 # TODO LENTISSIMO PERCHÉ FA TUTTI I FOR DIRETTAMENTE IN PYTHON E IN SINGLE CORE
 # TODO ha senso salvare le peakmap come sparse per salvare un poco di spazio su disco MA ritrovarsi a non poter vettorializzare il calcolo (perché le righe non sono tutte di lunghezza uguale). se si salvassero le peakmap direttamente dense, ma col nuovo .mat (>7.3) che è un h5 e dunque supporta la coversione? si arriverebbe orientativamente allo stesso spazio occupato, ma con la possibilità di vettorializzare e parallelizzare tutto il calcolo?

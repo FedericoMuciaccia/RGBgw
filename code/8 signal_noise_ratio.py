@@ -362,7 +362,7 @@ if make_plot is True:
     pyplot.close()
 # TODO fare deconvoluzione per accentuare e stringere il picco?
 
-# TODO la derivata prima dovrebbe essere più rumorosa dei dati originali, quindi ci dovrebbe essere un modo per migliorare la peakmap facendo una derivata multiscala, con kernel sempre maggiori
+# TODO la derivata prima dovrebbe essere più rumorosa dei dati originali, quindi ci dovrebbe essere un modo per migliorare la peakmap facendo una derivata multiscala, con kernel sempre maggiori. bisogna tenere conto del tempo di correlazione del rumore e del fatto che il rilevatore stesso introduce un tempo di integrazione
 def peakmap(image):
     copied_image = image.copy() # here without log10
     # TODO controllare i bordi

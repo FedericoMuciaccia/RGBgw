@@ -583,6 +583,7 @@ def process_folder(path):
     
     # TODO funziona!!!
     mat_files = glob.glob(folder_path + '**/*.mat', recursive=True) # TODO segue correttamente anche i link simbolici (dunque attenzione ai loop)
+    # mat_files.sort()
     mat_files = sorted(mat_files) # TODO per cercare di garantire la continuità dei valori di GPS_time
     
 #    datasets = []
