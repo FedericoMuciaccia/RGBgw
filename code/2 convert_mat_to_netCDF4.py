@@ -27,18 +27,11 @@ import glob
 
 # %matplotlib inline
 
+# TODO script tutto trascritto nel report
+
 #%%%%%%%%%%%%%%%%%%%%%%
 
-
-
-
-
-
 # TODO vedere modulo interno di python per l'elaborazione dei path
-
-# file craeate_peakmap.m
-
-# fare rumore vero con e senza soglia
 
 #altro_path = './dati_di_prova/altri/L1:GDS-CALIB_STRAIN_20161228_110935.SFDB09'
 
@@ -49,6 +42,7 @@ file_path = '/storage/users/Muciaccia/prova_H.mat'
 
 # TODO scipy does not support v7.3 mat-files
 # matlab --v7.3 files are hdf5 datasets
+# TODO provare
 # import h5py 
 # f = h5py.File('somefile.mat','r') 
 # data = f.get('data/variable1') 
@@ -64,7 +58,7 @@ show_time_data = True # TODO plottare i dati nel tempo per vedere le sequenze te
 
 # TODO vedere pacchetto di LIGO GWpy
 
-# TODO i valori della fft sono complessi, mentre i due spettri sono reali. vedere complex32 su GPU
+# TODO i valori della fft sono complessi, mentre i due spettri sono reali. vedere complex64 su GPU
 
 # TODO Dataset.groupby(detector)
 
@@ -145,10 +139,10 @@ def process_file(file_path):
     
     # load the .mat file, squeezing all the useless Matlab extra dimensions
     s = scipy.io.loadmat(file_path, squeeze_me=True)
-    # TODO vedere se c'è modo di aprire direttamente i .mat v7.3 tramite h5
+    # TODO vedere se c'è modo di aprire direttamente i .mat v7.3 tramite hdf5.py
     
     minimum_frequency = s['starting_fft_frequency'] # 0 Hz
-    maximum_frequency = 128 # TODO hardcoded # TODO magari si può ottenere dal tempo di sottocampionamento # TODO 1/(2*s['subsampling_time'])
+    maximum_frequency = 128 # TODO hardcoded # TODO magari si può ottenere dal tempo di sottocampionamento # TODO 1/(2*s['subsampling_time']) # Nyquist_frequency = time_sampling_rate / 2
     frequency_interval = maximum_frequency - minimum_frequency
     fft_lenght = s['fft_lenght'] # t_FFT = 8192 seconds
     frequency_resolution = s['frequency_resolution'] # 1/t_FFT = 1/8192
@@ -238,7 +232,7 @@ def process_file(file_path):
     # TODO farlo con numpy.any()
     
     # autoregressive_spectrum and periodogram must be more or less the same in this flat area
-    # they are different in the peaks, because by construction the autoregrerrive mean ignores them
+    # they are different in the peaks, because by construction the autoregressive mean ignores them
     # the autoregressive_spectrum can follow the noise nonstationarities
     periodogram_median = numpy.median(selected_periodogram, axis=1)
     #median_difference = autoregressive_spectrum_median - periodogram_median

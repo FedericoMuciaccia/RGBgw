@@ -12,6 +12,8 @@ function convert_SFDB09_to_mat(path, output_folder) % TODO mettere il default ou
     % 'path' can refer both to a single file or a whole data directory
     % TODO vedere se funziona pure sulle liste di files
     
+    % TODO tutto lo script gia' incluso nella relazione
+    
     % define a function to convert a single SFDB file
     function convert_single_file(file_path, output_folder) % TODO mettere il default output_folder="./"
         % adapted for the original code written by Pia Astone
@@ -111,7 +113,7 @@ function convert_SFDB09_to_mat(path, output_folder) % TODO mettere il default ou
         % number of artificial zeros, used to fill every time hole in the FFT (eg: non-science data)
         number_of_zeros = header.n_zeroes;
         
-        % window type used in the FF
+        % window type used in the FFT
         if header.wink(1) == 0
             window_type = 'none';
         elseif header.wink(1) == 1

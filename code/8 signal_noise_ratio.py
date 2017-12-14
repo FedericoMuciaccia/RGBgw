@@ -14,14 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# TODO file già tutto incluso nella relazione
 
 import numpy
 
+import matplotlib
 from matplotlib import pyplot
 
 import tensorflow as tf
 
 session = tf.InteractiveSession()
+
+matplotlib.rcParams.update({'font.size': 20}) # il default è 10 # TODO attenzione che fa l'override di tutti i settaggi precedenti
 
 second = 1
 minute = 60*second
@@ -53,7 +57,7 @@ t = numpy.arange(start=image_time_start, stop=image_time_stop, step=time_resolut
 #t = tf.linspace(start=image_time_start, stop=image_time_stop, num=image_time_interval*time_sampling_rate + 1) # last value included
 
 # TODO trovare il valore corretto usando a ritroso la distribuzione chi quadro con due gradi di libertà
-noise_amplitude = 1.5e-5 # deve dare 1e-6 # TODO check normalizzazione
+noise_amplitude = 1#1.5e-5 # deve dare 1e-6 # TODO check normalizzazione
 #white_noise = noise_amplitude*numpy.random.randn(t.size).astype(numpy.float32) # gaussian noise around 0
 white_noise = tf.random_normal(shape=t.shape, mean=0, stddev=noise_amplitude).eval() # float32
 # tensorflow is way faster than numpy at generating random numbers
@@ -112,13 +116,14 @@ time_slice = range(signal_start_index-256, signal_start_index+256)
 
 if make_plot is True:
     pyplot.figure(figsize=[15,10])
-    pyplot.title('injected signal (displayed 50x) and gaussian white noise\ncritical ratio = {}'.format(signal_scale_factor))
+    pyplot.title('injected signal (displayed 50x) and gaussian white noise\nR = {}'.format(signal_scale_factor))
     pyplot.plot(white_noise[time_slice]) # TODO senza logy?
     pyplot.plot(50*signal[time_slice])
     pyplot.xticks([0,256,512],[signal_time_start-1,signal_time_start,signal_time_start+1]) # TODO hardcoded
     #pyplot.show()
     pyplot.xlabel('time [s]')
-    pyplot.savefig('/storage/users/Muciaccia/media/white_noise_and_injected_signal.svg', dpi=300)
+    pyplot.ylabel('normalized strain')
+    pyplot.savefig('/storage/users/Muciaccia/media/white_noise_and_injected_signal.jpg', dpi=300, bbox_inches='tight')
     pyplot.close()
     # NOTE: the y scale is linear: the noise is gaussian around 0
 
@@ -192,7 +197,7 @@ if make_plot is True:
     pyplot.xlabel('time [s]')
     pyplot.title('flat top cosine edge window')
     #pyplot.show()
-    pyplot.savefig('/storage/users/Muciaccia/media/flat_top_cosine_edge_window.svg', dpi=300)
+    pyplot.savefig('/storage/users/Muciaccia/media/flat_top_cosine_edge_window.svg', dpi=300, bbox_inches='tight')
     pyplot.close()
 
 def make_chunks(time_data, windowed = False):
@@ -259,10 +264,14 @@ def make_whitened_spectrogram(time_data): # the fast Fourier transform needs pow
 #####################################
 
 # TODO BUG: tensorflow non ha una versione di rfft che giri su CPU, quindi il codice non è portabile su tutti i dispositivi
+# TODO penso che loro non facciano l'analisi totalmente oerente del run sia per i glitch sia per l'onerosità del calcolo della Fourier transform. si potrebbe vedere fin dove si riesce ad arrivare su GPU
 # TODO VEDERE tf.batch_fft2d
 # TODO VEDERE tf.contrib.signal ha delle routine per calcolare gli spettrogrammi
 # TODO BUG: numpy ha il grossissimo bug che computa molte cose (tipo la fft) in float64 e poi si deve convertire in float32, apendo però nel mentre occupato temporaneamente il doppio della RAM
 # TODO cercare un modo per forzare la computazione di numpy ad essere sempre fatta in float32
+
+# TODO credo sia molto importante, per i segnali lunghi/continui, fare un matching pure sull'informazione della fase. non ha senso buttare questa informazione preziosa usando il solo amplitude spectrogram. phase spectrograms e conbinazione della fase a due/tre canali ed eventuali battimenti. incertezza fase-numero, squeezing e complementarietà con gli amplitude spectrograms. la coerenza di fase mi pare una cosa essenziale, da verificare lungo tutta la traiettoria del segnale e con la differenza di fase tra i tre interferometri. inoltre quando la pulsar glitcha e cambia frequenza e fase, tutti gli interferometri cambiano alla stessa maniera. vedere se i tre interferometri possono interferire con battimenti, per aumentare la risposta. oppure combinare i due audio di H ed L in un 3D-sound che metta i segnali in accordo di fase (ma tra loro sfasati) ben localizzati spazialmente, in modo che si possa fare un'analisi basata sul clustering spaziale. la frequenza dei binaural beats può dare informazioni sulla localizzione nel cielo della sorgente.
+# TODO un altro argomento potrebbe essere il denoising dell'audio direttamente nel dominio complesso, dunque non limitandosi ad usare solo l'informazione sull'ampiezza
 
 whitened_spectrogram = make_whitened_spectrogram(time_data)
 
@@ -278,7 +287,7 @@ if make_plot is True:
     pyplot.xlabel('frequency [Hz]')
     #pyplot.legend(loc='lower right', frameon=False)
     #pyplot.show()
-    pyplot.savefig('/storage/users/Muciaccia/media/white_noise_complete_whitened_spectrum_with_injected_signal.jpg')#, dpi=300)
+    pyplot.savefig('/storage/users/Muciaccia/media/white_noise_complete_whitened_spectrum_with_injected_signal.jpg', bbox_inches='tight')#, dpi=300)
     pyplot.close()
     # TODO WISHLIST: spectrogram[all,1]
 
@@ -333,7 +342,7 @@ if make_plot is True:
     pyplot.ylabel('counting')
     pyplot.title('histogram of pixel values in 1 image')
     pyplot.legend(frameon=False)
-    pyplot.savefig('/storage/users/Muciaccia/media/histogram_of_whitened_white_noise_with_injected_signal.svg', dpi=300)
+    pyplot.savefig('/storage/users/Muciaccia/media/histogram_of_whitened_white_noise_with_injected_signal.svg', dpi=300, bbox_inches='tight')
     #pyplot.show()
     pyplot.close()
 
@@ -344,10 +353,12 @@ if make_plot is True:
 pyplot.figure(figsize=[10,10*256/148])
 pyplot.imshow(numpy.log10(image), origin="lower", interpolation="none", cmap='gray')
 pyplot.title('whitened spectrogram (log10 values)')
+pyplot.xlabel('time index')
+pyplot.ylabel('frequency index')
 # TODO mettere linea a time_index = 60 per far capire dove si posiziona il plot successivo
 #pyplot.colorbar()
 #pyplot.show()
-pyplot.savefig('/storage/users/Muciaccia/media/white_noise_image_with_signal_scale_factor_{}.jpg'.format(signal_scale_factor), dpi=300)
+pyplot.savefig('/storage/users/Muciaccia/media/white_noise_image_with_signal_scale_factor_{}.jpg'.format(signal_scale_factor), dpi=300, bbox_inches='tight')
 pyplot.close()
 
 if make_plot is True:
@@ -358,7 +369,7 @@ if make_plot is True:
     pyplot.xlabel('frequency index')
     pyplot.ylabel('pixel value')
     #pyplot.show()
-    pyplot.savefig('/storage/users/Muciaccia/media/vertical_slice.svg', dpi=300)
+    pyplot.savefig('/storage/users/Muciaccia/media/vertical_slice.svg', dpi=300, bbox_inches='tight')
     pyplot.close()
 # TODO fare deconvoluzione per accentuare e stringere il picco?
 
@@ -375,8 +386,10 @@ def peakmap(image):
 pyplot.figure(figsize=[10,10*256/148])
 pyplot.imshow(peakmap(image), origin="lower", interpolation="none", cmap='gray_r')
 pyplot.title('peakmap')
+pyplot.xlabel('time index')
+pyplot.ylabel('frequency index')
 #pyplot.show()
-pyplot.savefig('/storage/users/Muciaccia/media/white_noise_peakmap_with_signal_scale_factor_{}.jpg'.format(signal_scale_factor), dpi=300)
+pyplot.savefig('/storage/users/Muciaccia/media/white_noise_peakmap_with_signal_scale_factor_{}.jpg'.format(signal_scale_factor), dpi=300, bbox_inches='tight')
 pyplot.close()
 # NOTA: per segnali giganteschi appare correttamente la regione di svuotamento attorno al segnale
 

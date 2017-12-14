@@ -22,11 +22,15 @@
 # copyright.address = None
 # copyright.license = 'GPLv3' # oppure 'all-rights-reserved' o 'public-domain' o 'C0'
 
+# TODO tutto lo script è già stato incluso nella relazione
+
 import numpy
 import xarray
 import matplotlib
 matplotlib.use('SVG') # per poter girare lo script pure in remoto sul server, dove non c'è il server X
 from matplotlib import pyplot
+
+matplotlib.rcParams.update({'font.size': 25}) # il default è 10 # TODO attenzione che fa l'override di tutti i settaggi precedenti
 
 dataset = xarray.open_mfdataset('/storage/users/Muciaccia/background_RGB_images/*.netCDF4', concat_dim='image_index')
 # dataset.images
@@ -42,10 +46,6 @@ number_of_samples, rows, columns, channels = RGB_images.shape
 # esempio di immagine col solo background
 # lo salvo adesso per usarlo dopo, per plottarlo a seguito della log-normalizzazione
 RGB_noise_example = RGB_images[0].copy()
-
-# TODO mettere artificialmente dei buchi nei dati di Virgo, giusto per far vedere tutte le possibili combinazioni di colore
-#RGB_noise_example[:,slice(25,45),2] = 0
-#RGB_noise_example[:,slice(70,95),2] = 0
 
 def log_normalize(image):
     # log-normalization of the images
@@ -118,9 +118,9 @@ pyplot.hist([R,G,B],
             #alpha=0.1)
 #pyplot.vlines(x=numpy.log(1e-6), ymin=0, ymax=40000, color='black', label='level of the injected signal (1e-6)')
 pyplot.vlines(x=numpy.log(2.5), ymin=0, ymax=40000, color='orange', label='peakmap threshold = 2.5')
-pyplot.vlines(x=numpy.log(numpy.e), ymin=0, ymax=40000, color='black', label='level of the injected signal (log(e) = 1 > log(2.5) = 0.92)')
-pyplot.legend(loc='upper left', frameon=False)
-pyplot.savefig('/storage/users/Muciaccia/media/background_histograms.svg')
+#pyplot.vlines(x=numpy.log(numpy.e), ymin=0, ymax=40000, color='black', label='level of the injected signal (log(e) = 1 > log(2.5) = 0.92)')
+pyplot.legend(loc='upper left')#, frameon=False)
+pyplot.savefig('/storage/users/Muciaccia/media/background_histograms.jpg', dpi=300, bbox_inches='tight')
 #pyplot.show()
 pyplot.close()
 # TODO farlo in scala semilog, che si capisce meglio ed è un formato molto più comune # TODO vedere se le due forme funzionali sono esattamente le stesse con lin_dati+log_scala VS log_dati+lin_scala
@@ -140,7 +140,7 @@ pyplot.close()
 
 # con signal_intensity = 10 arrivo ad accuracy=1.0 :)
 # e poi pure 100% con 9,8,7,6,5,4. poi altissima con 99% @3, 98% @2, 92% @1)
-default_signal_intensity = 4 # 32, 16, 8, 4, 2, 1 # TODO fare un for per generarli tutti automaticamente
+default_signal_intensity = 32 # 32, 16, 8, 4, 2, 1 # TODO fare un for per generarli tutti automaticamente
 def add_signal(image, signal_intensity = default_signal_intensity): # un segnale di 1e-5 si vede benissimo ad occhio nudo, con un errore sostanzialmente nullo. 1e-6 si vede ancora ma non benissimo. 0.7e-6 è l'ultimo valore per cui si riesce a vedere (veramente a stento) ad occhio nudo, poiché si trova sul picco delle gaussiane dell'istogramma dei pixel. sotto il picco non si riesce ad andare. il livello di 1e-6 mi sembra comunque inferiore alla soglia di 2.5 sigma che si mette per le peakmap, quindi comunque questo classificatore arriva sotto il loro limite di detectability. il classificatore denso NON riesce a riconosce il livello di 1e-6
 # TODO in futuro bisognerà anche mettere una funzione glitch_injection(...) in modo che la rete si addestri anche ad escludere le linee che mostrano un colore solo (ma non quelle con due colori, dato che il terzo colore del segnale potrebbe essere momentaneamente sparito a causa del pattern di antenna. fare una classificazione a più categorie: [noise, 1glitch, 2signal, 3signal] in modo da effettivamente dimostrare che la rete è capace di distinguere i glitch
     rows, columns, channels = image.shape
@@ -161,6 +161,7 @@ def add_signal(image, signal_intensity = default_signal_intensity): # un segnale
     signal_spindown = numpy.random.randint(low=-max_spindown, high=0)
     # the minus sign is because we want signals with decreasing frequency (spindown and not spinup)
     # spindown = frequency_difference = f_end - f_start
+    # NO: lo spindown è la derivata temporale della frequenza
     # example: f_end = 3, f_start = 5, spindown = -2
     signal_ending_frequency = signal_starting_frequency + signal_spindown
     

@@ -23,6 +23,7 @@ from matplotlib import pyplot
 dataset = xarray.open_mfdataset('/storage/users/Muciaccia/netCDF4/O2/C01/128Hz/LIGO Hanford*.netCDF4')
 # only the L channel is enough: we want grayscale images
 
+# TODO provare a fare plot RGB o fare le peakmap combinate per confermare se ci sono altri segnali
 
 # O2 noise features
 # (hardware injections and big resonances)
@@ -39,7 +40,7 @@ pulsar3_whole_run = dataset.whitened_spectrogram.sel(frequency=frequency_slice, 
 fig = pyplot.figure(figsize=[20,10])
 numpy.log(pulsar3_whole_run).plot(vmin=-10, vmax=5, cmap='gray', extend='neither', cbar_kwargs=dict(shrink=0.5))
 fig.autofmt_xdate() # rotate the labels of the time ticks
-pyplot.savefig('/storage/users/Muciaccia/media/pulsar3_hardware_injection_whole_run.jpg', dpi=300)
+pyplot.savefig('/storage/users/Muciaccia/media/pulsar3_hardware_injection_whole_run.jpg', dpi=300, bbox_inches='tight')
 pyplot.close()
 
 # 5 days view

@@ -49,6 +49,11 @@ def to_dense_peakmap(grayscale_image):
 #    frequencies, times = numpy.nonzero(dense_peakmap)
 #    return dict(time=times, frequency=frequencies)
 
+# TODO
+# L1 regularizer for sparsity
+# doppio conteggio con l'interlacciamento
+# problemi con la densità dei picchi vicino le risonanze probabilmente a causa del whitening non ottimale nel caso dei detector a barre.
+
 def create_sparse_peakmap(file_path):
     dataset = xarray.open_dataset(file_path)
     

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# TODO file già incluso per intero nella relazione
 
 # NOTA: un ragazzo che studiava medicina preso a caso in biblioteca ci ha messo <60 immagini per capire come classificare
 
@@ -115,6 +116,7 @@ model = tflearn.DNN(network, tensorboard_verbose=0) # 3
 # talk massimo 20 minuti
 # numero DCC messo nella presentazione (ad una conferenza)
 
+# CNAF
 # pwd nella home
 # /home/VIRGO/muciaccia
 # software su virgo3
@@ -142,8 +144,8 @@ model = tflearn.DNN(network, tensorboard_verbose=0) # 3
 # NOTE e TODO:
 # tra i miei 10 minuti di training e la settimana di traning scritta nell'articolo c'è una differenza esattamente di un fattore mille
 # poi il numero di kernel andrà ottimizzato guardando le immagini generate massimizzando il gradiente, in modo da essere sicuri di non star levando spazio a features rilevanti (come ad esempio tutte le varie combinazioni di colore)
-# vedere se si riesce ad andare sotto la soglia della peakmap, nel qual caso si può alaborare una strategia per analizzare anche i segnali continui
-# nel futuro fa estrarre alla rete anche i parametri del segnale (o farlo fare ad una rete dedicata, a valle di una pulizia ottimale del segnale)
+# vedere se si riesce ad andare sotto la soglia della peakmap, nel qual caso si può alaborare una strategia per analizzare anche i segnali continui (e partecipare al data challenge con le hardware injections)
+# nel futuro far estrarre alla rete anche i parametri del segnale (o farlo fare ad una rete dedicata, a valle di una pulizia ottimale del segnale)
 # nel futuro far fare la selezione degli spettri direttamente ad un sistema automatico
 # l'eventuale dropout iniziale di fatto gioca il ruolo di data augmentation
 # in futuro farlo direttamente con gli streaming di dati che escono dall'interferometro
@@ -266,6 +268,11 @@ if validation:
 import numpy
 import sklearn.metrics
 
+import matplotlib
+from matplotlib import pyplot
+
+matplotlib.rcParams.update({'font.size': 20}) # il default è 10 # TODO attenzione che fa l'override di tutti i settaggi precedenti
+
 # TODO hack simil out-of-memory
 # TODO sulla CPU del mio laptop la predizione di un intero dataset di 5120 immagini prende un minuto circa usando tutti i core
 def predict_in_chunks(images):
@@ -325,7 +332,7 @@ def compute_metrics(dataset):
     #	           linestyle='dotted', 
     #	           alpha=0.8)
     ax1.legend(loc='upper left', frameon=False)
-    fig_predictions.savefig('/storage/users/Muciaccia/media/class_predictions/amplitude_{}.svg'.format(dataset.signal_intensity))
+    fig_predictions.savefig('/storage/users/Muciaccia/media/class_predictions/amplitude_{}.eps'.format(dataset.signal_intensity), bbox_inches='tight') # TODO rimettere svg
     pyplot.close()
     
     
@@ -374,7 +381,7 @@ metrics.sort_values(by='signal_intensity', inplace=True)
 
 print(metrics)
 
-# TODO serve del reinforcement learning per evitare tutti questi falsi positivi?
+# TODO serve del reinforcement learning per evitare tutti questi falsi positivi? oppure serve invertire la divergenza di Kullback-Leibler e la binary cross-entropy?
 # TODO far fare il primo addestramento con rumore bianco? (oppure mischiare i dataset di rumore bianco e rumore vero coi buchi)
 
 #  signal_intensity  true_negatives  false_positives  false_negatives  \

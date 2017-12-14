@@ -24,7 +24,9 @@ import matplotlib
 matplotlib.use('SVG') # per poter girare lo script pure in remoto sul server, dove non c'è il server X
 from matplotlib import pyplot
 
+matplotlib.rcParams.update({'font.size': 15}) # il default è 10 # TODO attenzione che fa l'override di tutti i settaggi precedenti
 
+# TODO tutto lo script già incluso nel report
 
 #######################
 
@@ -47,7 +49,7 @@ from matplotlib import pyplot
 # PAY ATTENTION: GPS_time duration must here be the same for both detectors # TODO fatto a mano # TODO risolverlo con le concatenazioni coi NaN
 
 # TODO load in chunks (out-of-memory computation) # TODO controllare se la lettura in chuncks viene fatta automaticamente con dataset grandi
-# viene automaticamente fatta lla concatenazione sui tempi: comodissimo!
+# viene automaticamente fatta la concatenazione sui tempi: comodissimo!
 # TODO non viene fatta bene la concatenzaione lungo GPS_time. TODO capire perché
 #dataset = xarray.open_mfdataset('/storage/users/Muciaccia/netCDF4/O2/C01/128Hz/*.netCDF4')#, chunks={'GPS_time': 100}) # hardcoded # TODO non legge le sottocartelle
 
@@ -99,12 +101,13 @@ d = xarray.concat([c,C], dim='x')
 # TODO ad essere precisi, probabilmente il segnale va iniettato a monte di tutto, nei dati grezzi nel dominio del tempo, per far vedere che effettivamente sopravvive a tutti gli step dell'analisi dati
 # future pipeline:
 # 1) read time-domain data
-# 2) inject signals
-# 3) create spectra
-# 4) select good spectra
-# 5) whitening
-# 6) create images
-# 7) classification
+# 2) clean the time-domain glitches
+# 3) inject signals
+# 4) create spectra
+# 5) select good spectra
+# 6) whitening
+# 7) create images
+# 8) classification
 
 # TODO mettere i tick temporali ogni 24 ore invece che ogni 12 (quando comincia ogni nuovo giorno, ovvero alla mezzanotte)
 fig, [raw, whitened] = pyplot.subplots(nrows=2, ncols=1, figsize=[10,10])
@@ -115,13 +118,14 @@ whitened.semilogy(dataset.frequency, dataset.whitened_spectrogram[:,100,0])
 whitened.set_ylabel('whitened strain') # TODO CHECK # TODO mettere nome 'ratio'
 whitened.set_xlabel('frequency [Hz]')
 raw.set_title('comparison between raw and whitened spectra \n', size=16) # TODO 3 hack
-pyplot.savefig('/storage/users/Muciaccia/media/whitening.jpg')
+pyplot.savefig('/storage/users/Muciaccia/media/whitening.jpg', bbox_inches='tight')
 pyplot.close()
 # TODO aggiungere per completezza anche la visualizzazione dello spettro autoregressivo
 # TODO per coerenza col contenuto del grafico, spostare queste istruzioni nello script precedente
 
-# TODO mettere i due istogrammi verticalmente a lato dei due spettri (come fannpo gli astrofisici per il grafico dei residui)
-# TODO non serve a molto, dato che poi verrà fatto un plot simile coi tre colori/canali/detector. serve solo a far vedere che la distribuzione non viene molto modificata
+# TODO mettere i due istogrammi verticalmente a lato dei due spettri (come fanno gli astrofisici per il grafico dei residui)
+# TODO non serve a molto, dato che poi verrà fatto un plot simile coi tre colori/canali/detector. serve solo a far vedere che la distribuzione non viene molto modificata dal whitening
+# TODO vedere come si può fare il whitening della varianza
 
 # TODO vedere se scriverlo su file
 numpy.log(dataset.spectrogram[0:256,0:128,0]).plot.hist(bins=100, range=[-20, 0])
@@ -235,9 +239,9 @@ pyplot.xticks(time_ticks, month_labels)
 pyplot.ylabel('density of FFTs on 1-week timescale') # TODO vedere nome migliore
 #pyplot.xlim([0,5*month]) # TODO
 pyplot.ylim([0,1])
-pyplot.legend(loc='upper left', frameon=False)
+pyplot.legend(loc='upper left')#, frameon=False)
 #pyplot.show()
-pyplot.savefig('/storage/users/Muciaccia/media/time_stability.svg', dpi=300)
+pyplot.savefig('/storage/users/Muciaccia/media/time_stability.jpg', dpi=300, bbox_inches='tight')
 pyplot.close()
 # TODO sistemare i colori
 # TODO mettere legenda con due label con detector e caratteristiche del run e tick temporali coi mesi
@@ -290,10 +294,8 @@ best_slice = good_slices[1]
 fig = pyplot.figure(figsize=[7,15])
 numpy.log(dataset.whitened_spectrogram[0:256,best_slice,0]).plot(vmin=-10, vmax=5, cmap='gray', extend='neither', cbar_kwargs=dict(shrink=0.5))
 fig.autofmt_xdate() # rotate the labels of the time ticks
-pyplot.savefig('/storage/users/Muciaccia/media/grayscale_example.jpg', dpi=300)
+pyplot.savefig('/storage/users/Muciaccia/media/grayscale_example.jpg', dpi=300, bbox_inches='tight')
 # TODO mettere log10
-
-
 
 # TODO che succede con le sovrapposizioni? si ripete/duplica parte del dataset?
 #good_dataset = dataset.isel(time = good_slices[0]) # TODO poi parallelizzare a mano su tutte le slice (così si riesce forse a fare tutto il calcolo in ram)
@@ -349,7 +351,7 @@ channels = 3 # TODO hardcoded
 # TODO PARTE LENTISSIMA E COSTRETTA DALL'AMMONTARE DI MEMORIA
 
 # TODO vedere dataset.groupby_bins e poi convertirlo in xarray con una nuova dimensione
-# per l'espansione generarre un MultiIndex e sostituirlo a quello corrente (magari passando per un reindexing). per il riordinamento fare un riarrangiamento delle dimensioni. per la contrazione fare un unstack
+# per l'espansione generare un MultiIndex e sostituirlo a quello corrente (magari passando per un reindexing). per il riordinamento fare un riarrangiamento delle dimensioni. per la contrazione fare un unstack
 
 
 
